@@ -1,4 +1,5 @@
 git+https://github.com/1flow/sparks.git@develop#egg=sparks
+git+https://github.com/Karmak23/humanize.git@develop#egg=humanize
 pytidylib
 lxml
 ordered-set
