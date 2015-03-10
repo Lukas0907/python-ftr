@@ -57,7 +57,7 @@ def requests_get(url):
 
 
 def ftr_process(url=None, content=None, config=None):
-    """ process an URL, or some already fetched content from a given URL.
+    u""" process an URL, or some already fetched content from a given URL.
 
     :param url: The URL of article to extract. Can be
         ``None``, but only if you provide both ``content`` and
@@ -85,8 +85,14 @@ def ftr_process(url=None, content=None, config=None):
 
     :returns:
         - either a :class:`ContentExtractor` instance with extracted
-          (and :attr:`.failures`) attributes set, in
-          case a site config could be found.
+          (and :attr:`.failures`) attributes set, in case a site config
+          could be found.
+          When the extractor knows how to handle multiple-pages articles,
+          all pages contents will be extracted and cleaned — if relevant —
+          and concatenated into the instance :attr:`body` attribute.
+          The :attr:`next_page_url` attribute will be a ``list``
+          containing all sub-pages links. Note: the first link is the one
+          you fed the extractor with ; it will not be repeated in the list.
         - or ``None``, if content was not given and url fetching returned
           a non-OK HTTP code, or if no site config could be found (in that
           particular case, no extraction at all is performed).
