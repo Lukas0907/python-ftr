@@ -31,7 +31,13 @@ LOGGER = logging.getLogger(__name__)
 
 @cached(timeout=CACHE_TIMEOUT)
 def requests_get(url):
-    """ Eventually cache the requests result. """
+    """ Run :func:`requests.get` in a ``cached()`` wrapper.
+
+    The cache wrapper uses the default timeout (environment variable
+    ``PYTHON_FTR_CACHE_TIMEOUT``, 3 days by default).
+
+    It is used in :func:`ftr_process`.
+    """
 
     LOGGER.info(u'Fetching %s…', url)
     return requests.get(url)
@@ -40,37 +46,43 @@ def requests_get(url):
 def ftr_process(url=None, content=None, config=None):
     """ process an URL, or some already fetched content from a given URL.
 
-    This function is suitable for live extraction (content currently
-    available on the internet), but also for postponed or post-mortem
-    extraction (where the content was removed from the internet, but you
-    still have the HTML and the original URL handy).
+    This function wraps all FTR classes for a one-liner behavior. It is
+    suitable for live extraction (content currently available on the
+    internet), but also for postponed or post-mortem extraction where
+    the content was removed from the internet but you still have the HTML
+    and the original URL handy.
 
-    :param url: The url of article to extract as an unicode string. Can be
-        ``None``, but only if you provide both :param:`content` and
-        :param:`config` arguments. Default: ``None``.
+    :param url: The URL of article to extract. Can be
+        ``None``, but only if you provide both ``content`` and
+        ``config`` parameters.
+    :type url: str, unicode or ``None``
 
-    :param content: the HTML content already downloaded, as string. If given,
-        it will be used for extraction, and the :param:`url` will be used only
-        for site config lookup. Default: ``None``.
+    :param content: the HTML content already downloaded. If given,
+        it will be used for extraction, and the ``url`` parameter will
+        be used only for site config lookup if ``config`` is not give.
+        Please, only ``unicode`` to avoid charset errors.
+    :type content: unicode or ``None``
 
-    :param config: a Five Filter site config (as string or :class:`SiteConfig`
-        instance). if None (eg. not given), it will be guessed from
-        :param:`url` as well as possible. Default: ``None``.
+    :param config: if ``None``, it will be looked up from
+        ``url`` as well as possible.
+    :type config: a :class:`SiteConfig` instance or ``None``
 
-    This function can raise some exceptions:
 
-    - :class:`SiteConfigNotFound` if no five-filter site config can be found.
-    - :class:`ContentExtractionException` if an error occured during
-      content extraction.
-    - any raw requests.* exception, network related, if anything goes
-      wrong during url fetching.
+    :raises:
+        - :class:`SiteConfigNotFound` if no five-filter site config can
+          be found.
+        - :class:`ContentExtractionException` if an error occured during
+          content extraction.
+        - any raw requests.* exception, network related, if anything goes
+          wrong during url fetching.
 
-    It will return:
-
-    - either a :class:`ContentExtractor` instance with extracted
-      attributes set, in case everything went OK.
-    - or ``None``, if content was not given and url fetching returned a
-      non-OK HTTP code, or if extraction (body or title) failed.
+    :returns:
+        - either a :class:`ContentExtractor` instance with extracted
+          (and :attr:`ContentExtractor.failures`) attributes set, in
+          case a site config could be found.
+        - or ``None``, if content was not given and url fetching returned
+          a non-OK HTTP code, or if no site config could be found (in that
+          particular case, no extraction at all is performed).
     """
 
     if url is None and content is None and config is None:
