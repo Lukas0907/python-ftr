@@ -160,7 +160,7 @@ def ftr_get_config(website_url, exact_host_match=False):
 
             for full_name in (
                 u'{0}{1}.txt'.format(repository, domain_name),
-                u'.{0}{1}.txt'.format(repository, domain_name),
+                u'{0}.{1}.txt'.format(repository, domain_name),
             ):
                 result = requests.get(full_name)
 
