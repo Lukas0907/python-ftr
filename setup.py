@@ -25,6 +25,7 @@ setup(
     packages=find_packages(),
     dependency_links=[
         'https://github.com/1flow/sparks/tarball/master#egg=sparks',
+        'https://github.com/Karmak23/humanize/tarball/master#egg=humanize',
     ],
     install_requires=[
         # 'html5lib',
