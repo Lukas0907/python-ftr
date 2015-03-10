@@ -1,5 +1,18 @@
 # -*- coding: utf-8 -*-
 u"""
+
+**The :func:`ftr_process` function wraps FTR classes for a one-liner behavior**.
+
+It is suitable for live extraction (content currently available on the
+internet), but also for postponed or post-mortem extraction where
+the content was removed from the internet but you still have the HTML
+and the original URL handy.
+
+.. note:: as of version 0.5, the :func:`ftr_process` function is the only
+    way to get multiple-page articles parsed correctly (eg. all pages
+    extracted, cleaned and appended as one). See :class:`ContentExtractor`
+    for details.
+
 Copyright 2015 Olivier Cortès <oc@1flow.io>.
 
 This file is part of the python-ftr project.
@@ -46,12 +59,6 @@ def requests_get(url):
 def ftr_process(url=None, content=None, config=None):
     """ process an URL, or some already fetched content from a given URL.
 
-    This function wraps all FTR classes for a one-liner behavior. It is
-    suitable for live extraction (content currently available on the
-    internet), but also for postponed or post-mortem extraction where
-    the content was removed from the internet but you still have the HTML
-    and the original URL handy.
-
     :param url: The URL of article to extract. Can be
         ``None``, but only if you provide both ``content`` and
         ``config`` parameters.
@@ -71,14 +78,12 @@ def ftr_process(url=None, content=None, config=None):
     :raises:
         - :class:`SiteConfigNotFound` if no five-filter site config can
           be found.
-        - :class:`ContentExtractionException` if an error occured during
-          content extraction.
-        - any raw requests.* exception, network related, if anything goes
-          wrong during url fetching.
+        - any raw ``requests.*`` exception, network related, if anything
+          goes wrong during url fetching.
 
     :returns:
         - either a :class:`ContentExtractor` instance with extracted
-          (and :attr:`ContentExtractor.failures`) attributes set, in
+          (and :attr:`.failures`) attributes set, in
           case a site config could be found.
         - or ``None``, if content was not given and url fetching returned
           a non-OK HTTP code, or if no site config could be found (in that
