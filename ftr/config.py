@@ -23,7 +23,14 @@ import os
 import re
 import logging
 
-from ordered_set import OrderedSet
+try:
+    from ordered_set import OrderedSet
+
+except ImportError:
+    # Avoid a crash during setup.py
+    # In normal conditions where deps are installed, this should not happen.
+    # Yeah I know it's an evil hack.
+    pass
 
 try:
     from cacheops import cached
