@@ -132,11 +132,15 @@ def ftr_process(url=None, content=None, config=None):
 
     if extractor.process(html=content):
 
-        next_page_url = getattr(extractor, 'next_page_url', None)
-
         # This is recursive. Yeah.
-        if next_page_url is not None:
-            extractor.body += ftr_process(url=next_page_url).body
+        if extractor.next_page_url is not None:
+            next_extractor = ftr_process(url=extractor.next_page_url)
+            extractor.body += next_extractor.body
+
+            extractor.next_page_url = [extractor.next_page_url]
+
+            if next_extractor.next_page_url is not None:
+                extractor.next_page_url.extend(next_extractor.next_page_url)
 
         return extractor
 
