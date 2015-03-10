@@ -66,16 +66,18 @@ def ftr_process(url=None, content=None, config=None):
 
     :param content: the HTML content already downloaded. If given,
         it will be used for extraction, and the ``url`` parameter will
-        be used only for site config lookup if ``config`` is not give.
+        be used only for site config lookup if ``config`` is not given.
         Please, only ``unicode`` to avoid charset errors.
     :type content: unicode or ``None``
 
-    :param config: if ``None``, it will be looked up from
-        ``url`` as well as possible.
+    :param config: if ``None``, it will be looked up from ``url`` with as
+        much love and AI as possible. But don't expect too much.
     :type config: a :class:`SiteConfig` instance or ``None``
 
 
     :raises:
+        - :class:`RuntimeError` in all parameters-incompatible situations.
+          Please RFTD carefully, and report strange unicornic edge-cases.
         - :class:`SiteConfigNotFound` if no five-filter site config can
           be found.
         - any raw ``requests.*`` exception, network related, if anything
