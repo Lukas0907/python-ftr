@@ -49,14 +49,7 @@ class ContentExtractor(object):
         I didn't reimplement the autodection code here. I use this class
         for configured parsing only.
 
-    Original (PHP) version info:
-
-    @version 1.0
-    @date 2013-02-05
-    @author Keyvan Minoukadeh
-    @copyright 2013 Keyvan Minoukadeh
-    @license http://www.gnu.org/licenses/agpl-3.0.html AGPL v3
-
+    Original PHP was version 1.0, written on 2013-02-05 by Keyvan Minoukadeh.
     """
 
     tidy_config = {
@@ -89,7 +82,11 @@ class ContentExtractor(object):
         # LOGGER.info(u'Set config to %s.', config)
 
     def reset(self):
-        """ (re)set all instance attributes to default. """
+        """ (re)set all instance attributes to default.
+
+        Every attribute is set to ``None``, except :attr:`author`
+        and :attr:`failures` which are set to ``[]``.
+        """
 
         self.config = None
         self.html = None
@@ -426,11 +423,14 @@ class ContentExtractor(object):
 
         Returns True on success, False on failure.
 
-        :param:`smart_tidy` indicates that if tidy is used and no results
-        are produced, we will try again without it. Tidy helps us deal
-        with PHP's patchy HTML parsing (LOOOOOL. Zeriously?) most of the
-        time but it has problems of its own which we try to avoid with
-        this option.
+        :param smart_tidy: boolean. When ``True`` (default), if tidy is
+            used and no result is produced, we will try again without
+            tidiing.
+            Generally speaking, tidy helps us deal with PHP's patchy HTML
+            parsing (LOOOOOL. Zeriously?) most of the time but it has
+            problems of its own which we try to avoid with this option.
+            In the Python implementation, `pytidylib` has showed to help
+            sanitize a lot the HTML before processing it.
         """
 
         # TODO: re-implement URL handling with self.reset() here.

@@ -6,4 +6,3 @@ Python FTR Extractor
 
 .. automodule:: ftr.extractor
         :members:
-        :undoc-members:

@@ -6,4 +6,3 @@ Python FTR Processing
 
 .. automodule:: ftr.process
         :members:
-        :undoc-members:
