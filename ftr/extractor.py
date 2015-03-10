@@ -45,9 +45,10 @@ class ContentExtractor(object):
     """
     Extract content from HTML, using patterns specified in site configuration.
 
-    .. todo:: autodection port. As 1flow has its own autodetection code,
-        I didn't reimplement the autodection code here. I use this class
-        for configured parsing only.
+    .. todo:: complete autodection port. As `1flow <http://1flow.io/>`_
+        has its own autodetection code and FTR was primarily developed to
+        be integrated in a complex parsing chain, I didn't reimplement
+        all of the automatic extraction code here.
 
     Original PHP was version 1.0, written on 2013-02-05 by Keyvan Minoukadeh.
     """
@@ -419,18 +420,45 @@ class ContentExtractor(object):
                     self.failures.append(attr_name)
 
     def process(self, html, url=None, smart_tidy=True):
-        """ Process HTML content or URL.
+        u""" Process HTML content or URL.
 
-        Returns True on success, False on failure.
+        For automatic extraction patterns and cleanups, :mod:`readability-lxml`
+        is used, to stick as much as possible to the original PHP
+        implementation and produce at least similar results with the same
+        site config on the same article/content.
 
-        :param smart_tidy: boolean. When ``True`` (default), if tidy is
-            used and no result is produced, we will try again without
-            tidiing.
+        :param html: an unicode string containing a full HTML page content.
+            Expected to have a ``DOCTYPE`` and all other standard
+            attributes ; eg. HTML fragments are not supported.
+            It will be replaced, tidied, cleaned, striped, and all
+            metadata and body attributes will be extracted from it.
+            Beware : this HTML piece will be mauled. See source code for
+            exact processing workflow, it's quite gorgeous.
+        :type html: unicode
+
+        :param url: as of version 0.5, this parameter is ignored. (**TODO**)
+        :type url: str, unicode or ``None``
+
+        :param smart_tidy: When ``True`` (default), runs :mod:`pytidylib`
+            to tidy the HTML, after after run ``find_string``/``replace_string``
+            replacements and before running extractions.
+        :type smart_tidy: bool
+
+        :returns: ``True`` on success, ``False`` on failure.
+        :raises:
+            - :class:`RuntimeError` if config has not been set at
+              instantiation. This should change in the future by looking
+              up a config if an ``url`` is passed as argument.
+
+        .. note:: If tidy is used and no result is produced, we will try
+            again without tidying.
             Generally speaking, tidy helps us deal with PHP's patchy HTML
             parsing (LOOOOOL. Zeriously?) most of the time but it has
             problems of its own which we try to avoid with this option.
             In the Python implementation, `pytidylib` has showed to help
-            sanitize a lot the HTML before processing it.
+            sanitize a lot the HTML before processing it. But nobody's
+            perfect, and errors can happen in the Python world too, thus
+            the *tidy* behavior was thought sane enough to be keep.
         """
 
         # TODO: re-implement URL handling with self.reset() here.
