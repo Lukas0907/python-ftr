@@ -41,8 +41,6 @@ They must give access to RAW config TXT format, else. There is partial test agai
 
 Eg. to use the filters from [the 1flow official repository](https://github.com/1flow/ftr-site-config), we use the following URL: `https://raw.githubusercontent.com/1flow/ftr-site-config/master/`.
 
-TODO: `file://` repository pattern implementation. As of now, this package always fetches configuration from the centralized repository. This is not always wanted if you have a local copy, but as the main benefit of FTR is mutualizing the configurations and enhancing then via the community, it still feels legit to try to download the latest one without needing you to update them.
-
 
 
 ## Usage
@@ -94,6 +92,7 @@ In the case where a config is found but it has no `site` or `body` directive (eg
 ## TODO
 
 - merge this README with RFTD contents and make it shorter.
+- implement `file://` repository patterns. As of now, this package always fetches configuration from the centralized repository. This is not always wanted if you have a local copy. As the main benefit of FTR is mutualizing the configurations and enhancing then via community PRs, it still feels legit to try to download the latest one without needing you to update them. But still, local configs could be cool.
 - implement a minimal caching solution when `cacheops` is not available. Without `cacheops`, the process will fetch the config everytime, and in most setups this is not acceptable for obvious slowlyness reasons. Currently, this project is used only in 1flow and `cacheops` is available. PRs welcome. A simple `memoize()` could do the trick for very basic needs.
 - allow to customize the datetime parser from the up-calling level. This will merge both worlds allowing the library to return parsed datetimes, and the calling code to provide a custom parser.
 - eventually, bring back the full `autodetect_on_failure` features if someone needs it.
