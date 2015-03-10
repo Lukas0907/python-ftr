@@ -74,12 +74,11 @@ class InvalidSiteConfig(SiteConfigException):
 
     """ Raised when an unrecoverable error is found in a site config.
 
-    Eg. when it has a very bad syntax error or a missing directive.
+    Eg. when it has a very bad syntax error or a missing mandatory directive.
 
-    Simple errors are just logged as warnings and ignored.
-
-    A missing directive can be a non-matching number of ``find_string``
-    / ``replace_string`` pairs.
+    As of version 0.5, all directives are optional, thus this exception
+    is raised only in case of a non-matching number of ``find_string``
+    / ``replace_string`` pairs. This could change in the future.
     """
 
     pass
@@ -97,16 +96,16 @@ def ftr_get_config(website_url, exact_host_match=False):
         wildcard config matches. For example if host is
         ``www.test.example.org``, we will try looking up
         ``test.example.org`` and ``example.org``.
-    :param exact_host_match: bool.
+    :param exact_host_match: bool
 
     :param website_url: either a full web URI (eg.
         ``http://www.website.com:PORT/path/to/a/page.html``) or simply
         a domain name (eg. ``www.website.com``). In case of a domain name,
         no check is performed yet, be careful of what you pass.
-    :type website_url: str or unicode.
+    :type website_url: str or unicode
 
     :returns: string -- the loaded site config, if found.
-    :raises: SiteConfigNotFound if no config could be found.
+    :raises: :class:`SiteConfigNotFound` if no config could be found.
 
     .. note:: Whatever ``exact_host_match`` value is, the ``www`` part is
         always removed from the URL or domain name.
@@ -201,11 +200,10 @@ def ftr_string_to_instance(config_string):
     :param config_string: a full site config file, raw-loaded from storage
         with something like
         ``config_string = open('path/to/site/config.txt', 'r').read()``.
-    :type config_string: str or unicode.
+    :type config_string: str or unicode
 
     :returns: a :class:`SiteConfig` instance.
-    :raises: InvalidSiteConfig in case of an unrecoverable error, like
-        unmatched ``find_string``/``replace_string`` pairs.
+    :raises: :class:`InvalidSiteConfig` in case of an unrecoverable error.
 
     .. note:: See the source code for supported directives names.
     """
