@@ -20,8 +20,7 @@ License along with python-ftr. If not, see http://www.gnu.org/licenses/
 
 """
 
-version = '0.1.0'
-
+from .version import version  # NOQA
 
 from .config import (  # NOQA
     ftr_get_config as get_config,
