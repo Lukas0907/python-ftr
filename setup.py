@@ -13,7 +13,7 @@ if '.' in sys.path:
 # the one eventually installed system-wide or in the current virtualenv.
 sys.path.insert(0, '.')
 
-from ftr import version
+from ftr.version import version
 
 setup(
     name="ftr",
