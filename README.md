@@ -93,10 +93,10 @@ In the case where a config is found but it has no `site` or `body` directive (eg
 
 ## TODO
 
-- enhance this documentation and make it more complete.
+- merge this README with RFTD contents and make it shorter.
 - implement a minimal caching solution when `cacheops` is not available. Without `cacheops`, the process will fetch the config everytime, and in most setups this is not acceptable for obvious slowlyness reasons. Currently, this project is used only in 1flow and `cacheops` is available. PRs welcome. A simple `memoize()` could do the trick for very basic needs.
-- allow to customize the datetime parser from the calling level. This will merge both worlds, allowing the library to return parsed datetimes, and the calling code to provide a custom parser.
-- eventually, bring back the full `autodetect_on_failure` features if someones needs it.
+- allow to customize the datetime parser from the up-calling level. This will merge both worlds allowing the library to return parsed datetimes, and the calling code to provide a custom parser.
+- eventually, bring back the full `autodetect_on_failure` features if someone needs it.
 
 
 
