@@ -32,7 +32,7 @@ except ImportError:
     from functools import wraps
 
     def cached(*a, **kw):
-        """ a no-op cache in case cacheops is not installed. """
+        """ A no-op decorator in case :mod:`cacheops` is not installed. """
 
         def decorator(func):
             @wraps(func)
@@ -90,15 +90,26 @@ def ftr_get_config(website_url, exact_host_match=False):
     """ Download the Five Filters config from centralized repositories.
 
     The first entry found is returned. If no configuration is found,
-    `None` is returned.
+    `None` is returned. If :mod:`cacheops` is installed, the result will
+    be cached with a default expiration delay of 3 days.
 
-    If exact_host_match is True, we will not look for wildcard config
-    matches. By default if host is 'test.example.org' we will look for
-    and load '.example.org.txt' if it exists.
+    :param exact_host_match: If ``False`` (default), we will look for
+        wildcard config matches. For example if host is
+        ``www.test.example.org``, we will try looking up
+        ``test.example.org`` and ``example.org``.
+    :param exact_host_match: bool.
 
-    :param website_url: a string, which can be either a full web URI (eg.
-        ``http://www.website.com:PORT/path/to/a/page.html``) a simply a domain
-        name (eg. ``www.website.com``).
+    :param website_url: either a full web URI (eg.
+        ``http://www.website.com:PORT/path/to/a/page.html``) or simply
+        a domain name (eg. ``www.website.com``). In case of a domain name,
+        no check is performed yet, be careful of what you pass.
+    :type website_url: str or unicode.
+
+    :returns: string -- the loaded site config, if found.
+    :raises: SiteConfigNotFound if no config could be found.
+
+    .. note:: Whatever ``exact_host_match`` value is, the ``www`` part is
+        always removed from the URL or domain name.
 
     .. todo:: there is currently no merging/cascading of site configs. In
         the original Five Filters implementation, primary and secondary
@@ -183,11 +194,20 @@ def ftr_get_config(website_url, exact_host_match=False):
 
 
 def ftr_string_to_instance(config_string):
-    """ Return a :class:`SiteConfig` built from the :param:`config_string`.
+    """ Return a :class:`SiteConfig` built from a ``config_string``.
+
+    Simple syntax errors are just plainly ignored, and logged as warnings.
 
     :param config_string: a full site config file, raw-loaded from storage
         with something like
         ``config_string = open('path/to/site/config.txt', 'r').read()``.
+    :type config_string: str or unicode.
+
+    :returns: a :class:`SiteConfig` instance.
+    :raises: InvalidSiteConfig in case of an unrecoverable error, like
+        unmatched ``find_string``/``replace_string`` pairs.
+
+    .. note:: See the source code for supported directives names.
     """
 
     config = SiteConfig()
@@ -377,11 +397,11 @@ class SiteConfig(object):
         self.replace_string = []
 
     def load(self, host, exact_host_match=False):
-        """ Load a config for a hostname or url. """
+        """ Load a config for a hostname or url.
 
-        if not host.startswith(u'http://') and not host.startswith(u'https://'):
-            # ftr_get_config() expects a full URL.
-            host = u'http://' + host
+        This method calls :func:`ftr_get_config` and :meth`append`
+        internally. Refer to their docs for details on parameters.
+        """
 
         # Can raise a SiteConfigNotFound, intentionally bubbled.
         config = ftr_get_config(host, exact_host_match)
@@ -395,7 +415,15 @@ class SiteConfig(object):
     def append(self, newconfig):
         """ Append another site config to current instance.
 
-        This method is also used at loading time.
+        All ``newconfig`` attributes are appended one by one to ours.
+        Order matters, eg. current instance values will come first when
+        merging.
+
+        Thus, if you plan to use some sort of global site config with
+        more generic directives, append it last for specific directives
+        to be tried first.
+
+        .. note:: this method is also aliased to :meth:`merge`.
         """
 
         # Check for commands where we accept multiple statements (no test_url)
