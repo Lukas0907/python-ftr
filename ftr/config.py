@@ -54,21 +54,33 @@ HOSTNAME_REGEX = re.compile(
 
 class SiteConfigException(Exception):
 
-    """ Abstract base class. """
+    """ Abstract base class for all :class:`SiteConfig` related exceptions.
+
+    Never raised directly, but you can catch it in an `except` block to
+    get them all at once.
+    """
 
     pass
 
 
 class SiteConfigNotFound(SiteConfigException):
 
-    """ Raised when no config can be found for a given website / url. """
+    """ Raised when no site config can be found for a given website or url. """
 
     pass
 
 
 class InvalidSiteConfig(SiteConfigException):
 
-    """ Raised when an unrecoverable error is found in a site config. """
+    """ Raised when an unrecoverable error is found in a site config.
+
+    Eg. when it has a very bad syntax error or a missing directive.
+
+    Simple errors are just logged as warnings and ignored.
+
+    A missing directive can be a non-matching number of ``find_string``
+    / ``replace_string`` pairs.
+    """
 
     pass
 
@@ -84,9 +96,14 @@ def ftr_get_config(website_url, exact_host_match=False):
     matches. By default if host is 'test.example.org' we will look for
     and load '.example.org.txt' if it exists.
 
-    .. todo:: there is currently no merging of site configs. In original
-        FTR, primary and secondary configurations were merged. We could
-        eventually re-implement this part if found useful.
+    :param website_url: a string, which can be either a full web URI (eg.
+        ``http://www.website.com:PORT/path/to/a/page.html``) a simply a domain
+        name (eg. ``www.website.com``).
+
+    .. todo:: there is currently no merging/cascading of site configs. In
+        the original Five Filters implementation, primary and secondary
+        configurations were merged. We could eventually re-implement this
+        part if needed by someone. PRs welcome as always.
     """
 
     import requests
@@ -99,7 +116,11 @@ def ftr_get_config(website_url, exact_host_match=False):
             u'https://raw.githubusercontent.com/fivefilters/ftr-site-config/master/'  # NOQA
         ).split() if x.strip() != u'']
 
-    proto, host_and_port, remaining = split_url(website_url)
+    try:
+        proto, host_and_port, remaining = split_url(website_url)
+
+    except:
+        host_and_port = website_url
 
     host_domain_parts = host_and_port.split(u'.')
 
@@ -162,7 +183,12 @@ def ftr_get_config(website_url, exact_host_match=False):
 
 
 def ftr_string_to_instance(config_string):
-    """ Return a :class:`SiteConfig` build from the :param:`config_string`. """
+    """ Return a :class:`SiteConfig` built from the :param:`config_string`.
+
+    :param config_string: a full site config file, raw-loaded from storage
+        with something like
+        ``config_string = open('path/to/site/config.txt', 'r').read()``.
+    """
 
     config = SiteConfig()
 
@@ -244,18 +270,11 @@ class SiteConfig(object):
 
     """ Holds extraction pattern and other directives for a given website.
 
-    See ContentExtractor class to see how it's used.
+    See :class:`ContentExtractor` class to see how it's used.
 
-    Five filters Site Config, ported to Python.
+    This is the Five Filters SiteConfig object, ported to Python.
 
-    Original was PHP, taken from
-    https://github.com/wallabag/wallabag/blob/master/inc/3rdparty/libraries/content-extractor/SiteConfig.php  # NOQA
-
-    @version 0.8
-    @date 2013-04-16
-    @author Keyvan Minoukadeh
-    @copyright 2013 Keyvan Minoukadeh
-    @license http://www.gnu.org/licenses/agpl-3.0.html AGPL v3
+    Original was PHP, version 0.8, written by Keyvan Minoukadeh.
     """
 
     defaults = {
@@ -281,7 +300,7 @@ class SiteConfig(object):
             self.append(ftr_string_to_instance(site_config_text))
 
     def reset(self):
-        """ (re)set all attributes to defaults. """
+        """ (re)set all attributes to defaults (eg. empty sets or ``None``). """
 
         # Use first matching element as title (0 or more xpath expressions)
         self.title = OrderedSet()
@@ -374,7 +393,10 @@ class SiteConfig(object):
         self.append(ftr_string_to_instance(config))
 
     def append(self, newconfig):
-        """ Append a dict()ified site config to current instance. """
+        """ Append another site config to current instance.
+
+        This method is also used at loading time.
+        """
 
         # Check for commands where we accept multiple statements (no test_url)
         for attr_name in (
