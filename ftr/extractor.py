@@ -20,9 +20,17 @@ License along with python-ftr. If not, see http://www.gnu.org/licenses/
 
 """
 import logging
-from lxml import etree
-# from lxml.cssselect import CSSSelector
-from readability.readability import Document
+try:
+    from lxml import etree
+    # from lxml.cssselect import CSSSelector
+    from readability.readability import Document
+
+except ImportError:
+    # Avoid a crash during setup.py
+    # In normal conditions where deps are installed, this should not happen.
+    # Yeah I know it's an evil hack.
+    pass
+
 from StringIO import StringIO
 
 LOGGER = logging.getLogger(__name__)
