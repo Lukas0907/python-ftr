@@ -5,6 +5,7 @@ Python *partial* (re-)implementation of Five-Filters extractor. Cleans up HTML a
 
 A notable difference is that this python implementation will fetch the website configuration from a centralized repository. 
 
+[API documentation is available](http://python-ftr.readthedocs.org), and this README should probably merged there at some point.
 
 
 ## Installation
