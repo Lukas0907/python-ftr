@@ -27,11 +27,12 @@ setup(
         'https://github.com/1flow/sparks/tarball/master#egg=sparks',
     ],
     install_requires=[
+        # 'html5lib',
         'pytidylib',
         'lxml',
         'ordered-set',
-        # 'html5lib',
         'readability-lxml',
+        'requests',
     ],
     extras_require={
         'cache':  ['cacheops'],

@@ -3,3 +3,4 @@ pytidylib
 lxml
 ordered-set
 readability-lxml
+requests
