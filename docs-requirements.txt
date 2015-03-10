@@ -1,0 +1,6 @@
+https://github.com/1flow/sparks.git@develop#egg=sparks
+https://github.com/1flow/python-ftr.git@develop#egg=ftr
+pytidylib
+lxml
+ordered-set
+readability-lxml
