@@ -391,7 +391,7 @@ class ContentExtractor(object):
         readabilitized = Document(self.html)
 
         if self.title is None:
-            if self.config.title is not None:
+            if bool(self.config.title):
                 self.failures.append('title')
 
             title = readabilitized.title().strip()
@@ -400,16 +400,26 @@ class ContentExtractor(object):
                 self.title = title
                 LOGGER.info(u'Got a title in automatic mode.')
 
+            else:
+                self.failures.append('title')
+
         if self.body is None:
-            if self.config.body is not None:
+            if bool(self.config.body):
                 self.failures.append('body')
 
             body = readabilitized.summary().strip()
 
             if body:
                 self.body = body
-
                 LOGGER.info(u'Extracted a body in automatic mode.')
+
+            else:
+                self.failures.append('body')
+
+        for attr_name in ('date', 'language', 'author', ):
+            if not bool(getattr(self, attr_name, None)):
+                if bool(getattr(self.config, attr_name, None)):
+                    self.failures.append(attr_name)
 
     def process(self, html, url=None, smart_tidy=True):
         """ Process HTML content or URL.
