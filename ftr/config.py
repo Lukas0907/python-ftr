@@ -265,8 +265,14 @@ def ftr_string_to_instance(config_string):
             'test_author',
             'test_language',
         ):
-            # Add to set, preserving order but squashing duplicates.
-            getattr(config, key).add(value)
+
+            if key.endswith(u'_string'):
+                # Append to list. Duplicites are allowed.
+                getattr(config, key).append(value)
+
+            else:
+                # Add to set, preserving order but squashing duplicates.
+                getattr(config, key).add(value)
 
         # Single statement commands that evaluate to True or False.
         elif key in ('tidy', 'prune', 'autodetect_on_failure', ):
