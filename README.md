@@ -29,7 +29,7 @@ And configure `cacheops` [as usual](https://github.com/Suor/django-cacheops).
 ### Environment
 
 - `PYTHON_FTR_CACHE_TIMEOUT`: optional, in seconds, as an integer. The caching time of websites configuration files. Defaults to 3 days. Not used if cache is not available.
-- `PYTHON_FTR_REPOSITORIES`: one or more URLs, separated by spaces. In case you need a space in the URL itself, urlencode() it (eg. `%2f`). Default values include 1flow repository and official Five-Filters repository (see below).
+- `PYTHON_FTR_REPOSITORIES`: one or more URLs, separated by spaces. In case you need a space in the URL itself, urlencode() it (eg. `%2f`). Default values include [1flow repository](https://github.com/1flow/ftr-site-config) and [official Five-Filters repository](https://github.com/fivefilters/ftr-site-config) (see below).
 
 
 
@@ -37,7 +37,7 @@ And configure `cacheops` [as usual](https://github.com/Suor/django-cacheops).
 
 If there are more than one repository, they will be tried in turn.
 
-They must give access to RAW config TXT format, else. There is partial test against failure on this side but beware, it's relatively weak.
+They must give access to raw config TXT format. There is partial test against failure on this side, but beware it's relatively weak. If the repository does not return `text/plain` results, it will be ignored.
 
 Eg. to use the filters from [the 1flow official repository](https://github.com/1flow/ftr-site-config), we use the following URL: `https://raw.githubusercontent.com/1flow/ftr-site-config/master/`.
 
@@ -55,16 +55,16 @@ extracted = ftr_process('http://en.wikipedia.org/wiki/Christopher_Lloyd')
 
 ```
 
-If the extraction worked, this will return a `ContentExtractor` instance with useful attributes, else `None` will be returned. Most common attributes are `title` (utf-8 string), `body` (utf-8 cleaned HTML), `date` (utf-8 string, see below), `authors` (list of utf-8 strings).
+If the extraction worked, this will return a `ContentExtractor` instance with useful attributes, else `None` will be returned. Most common attributes are `title` (unicode string), `body` (unicode cleaned HTML), `date` (unicode string, see below), `authors` (list of unicode strings).
 
 
 ### Advanced usage
 
-To be documented more, but simply look at the `ftr_process()` function, it wraps the underlying classes that are meant to be easily included in any type of code.
+To be documented more, but simply look at the [`ftr_process()` function documentation](http://python-ftr.readthedocs.org/en/latest/process.html), it wraps the underlying classes that are meant to be easily included in any type of code.
 
 
 
-## Differences with FiveFilters PHP implementation
+## Differences with the FiveFilters PHP implementation
 
 `python-ftr` :
 - has only one parser library (`lxml`) for now. The `html5lib` has not been ported yet.

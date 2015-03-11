@@ -1,36 +1,34 @@
 # -*- coding: utf-8 -*-
-u"""
+u""" The :func:`~ftr.process.ftr_process` function makes use of all FTR
+objects to offer an easy-to-use *one-liner* to integrate in your python
+code.
 
-**The :func:`ftr_process` function wraps FTR classes for a one-liner behavior**.
+:func:`~ftr.process.ftr_process` is suitable for live extraction (content
+currently available on the internet), but also for postponed or post-mortem
+extraction where the content was removed from the internet but you still
+have the HTML and the original URL handy.
 
-It is suitable for live extraction (content currently available on the
-internet), but also for postponed or post-mortem extraction where
-the content was removed from the internet but you still have the HTML
-and the original URL handy.
+.. note:: as of current version the :func:`~ftr.process.ftr_process`
+    wrapper is the only way to get multiple-page articles parsed as a
+    whole (eg. all pages extracted, cleaned and appended as one). See
+    :class:`~ftr.extractor.ContentExtractor` for details.
 
-.. note:: as of version 0.5, the :func:`ftr_process` function is the only
-    way to get multiple-page articles parsed correctly (eg. all pages
-    extracted, cleaned and appended as one). See :class:`ContentExtractor`
-    for details.
+.. Copyright 2015 Olivier Cortès <oc@1flow.io>.
 
-Copyright 2015 Olivier Cortès <oc@1flow.io>.
+    This file is part of the python-ftr project.
 
-This file is part of the python-ftr project.
+    python-ftr is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of
+    the License, or (at your option) any later version.
 
-python-ftr is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of
-the License, or (at your option) any later version.
+    python-ftr is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
 
-python-ftr is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public
-License along with python-ftr. If not, see http://www.gnu.org/licenses/
-
-
+    You should have received a copy of the GNU Affero General Public
+    License along with python-ftr. If not, see http://www.gnu.org/licenses/
 """
 import requests
 import logging

@@ -1,23 +1,29 @@
 # -*- coding: utf-8 -*-
-u"""
-Copyright 2015 Olivier Cortès <oc@1flow.io>.
+u""" Python FTR configuration class and utils.
 
-This file is part of the python-ftr project.
+The configuration files are named “ siteconfig ” in Five Filters
+terminology, and probably stands for “ website configuration ” sets.
 
-python-ftr is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of
-the License, or (at your option) any later version.
+A `siteconfig` is a simple text file with a ``key: value`` format.
+These files are loaded into :class:`SiteConfig` instances. They are
+named after the website they hold rules for.
 
-python-ftr is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+.. Copyright 2015 Olivier Cortès <oc@1flow.io>.
 
-You should have received a copy of the GNU Affero General Public
-License along with python-ftr. If not, see http://www.gnu.org/licenses/
+    This file is part of the python-ftr project.
 
+    python-ftr is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of
+    the License, or (at your option) any later version.
 
+    python-ftr is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public
+    License along with python-ftr. If not, see http://www.gnu.org/licenses/
 """
 import os
 import re
