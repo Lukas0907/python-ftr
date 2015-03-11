@@ -134,8 +134,15 @@ class ContentExtractor(object):
 
         if self.config.tidy and tidylib and smart_tidy:
 
-            document, errors = tidylib.tidy_document(html, self.tidy_config)
+            try:
+                document, errors = tidylib.tidy_document(html, self.tidy_config)
 
+            except UnicodeDecodeError:
+                # For some reason, pytidylib fails to decode, whereas the
+                # original html content converts perfectly manually.
+                document, errors = tidylib.tidy_document(html.encode('utf-8'),
+                                                         self.tidy_config)
+                document = document.decode('utf-8')
             # if errors:
             #     LOGGER.debug(u'Ignored errors returned by tidylib: %s',
             #                  errors)
@@ -211,12 +218,22 @@ class ContentExtractor(object):
 
             if len(items) == 1:
                 item = items[0]
-                self.title = item.text
+                try:
+                    self.title = item.text
+
+                except AttributeError:
+                    # '_ElementStringResult' object has no attribute 'text'
+                    self.title = unicode(item)
 
                 LOGGER.info(u'title set to “%s”', self.title)
 
                 try:
                     item.getparent().remove(item)
+
+                except TypeError:
+                    # Argument 'element' has incorrect type (expected
+                    # lxml.etree._Element, got _ElementStringResult)
+                    pass
 
                 except:
                     LOGGER.exception(u'Could not remove title from document.')
@@ -236,7 +253,12 @@ class ContentExtractor(object):
 
         for pattern in self.config.author:
             for item in self.parsed_tree.xpath(pattern):
-                stripped_author = item.text.strip()
+                try:
+                    stripped_author = item.text.strip()
+
+                except AttributeError:
+                    # '_ElementStringResult' object has no attribute 'text'
+                    stripped_author = unicode(item).strip()
 
                 if stripped_author:
                     self.author.append(stripped_author)
@@ -276,7 +298,12 @@ class ContentExtractor(object):
 
         for pattern in self.config.date:
             for item in self.parsed_tree.xpath(pattern):
-                stripped_date = item.text.strip()
+                try:
+                    stripped_date = item.text.strip()
+
+                except AttributeError:
+                    # '_ElementStringResult' object has no attribute 'text'
+                    stripped_date = unicode(item).strip()
 
                 if stripped_date:
                     # self.date = strtotime(trim(elems, "; \t\n\r\0\x0B"))
