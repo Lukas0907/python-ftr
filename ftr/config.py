@@ -276,7 +276,12 @@ def ftr_string_to_instance(config_string):
 
         # Single statement commands that evaluate to True or False.
         elif key in ('tidy', 'prune', 'autodetect_on_failure', ):
-            setattr(config, key, bool(value))
+
+            if value.lower() in ('no', 'false', '0', ):
+                setattr(config, key, False)
+
+            else:
+                setattr(config, key, bool(value))
 
         # Single statement commands stored as strings.
         elif key in ('parser', ):
