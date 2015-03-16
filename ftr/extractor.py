@@ -458,11 +458,26 @@ class ContentExtractor(object):
                             new_tree = etree.parse(
                                 StringIO(pruned_string), self.parser)
 
+                            failed = False
+
                             try:
                                 body.append(
                                     new_tree.xpath('//html/body/div/div')[0]
                                 )
                             except IndexError:
+
+                                if 'id="readabilityBody"' in pruned_string:
+                                    try:
+                                        body.append(
+                                            new_tree.xpath('//body')
+                                        )
+                                    except:
+                                        failed = True
+
+                                else:
+                                    failed = True
+
+                            if failed:
                                 LOGGER.error(u'Pruning this item did not '
                                              u'work:\n\n%s\n\nWe got: “%s” '
                                              u'and skipped it.',
