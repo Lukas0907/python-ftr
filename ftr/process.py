@@ -99,7 +99,7 @@ def ftr_process(url=None, content=None, config=None):
           When the extractor knows how to handle multiple-pages articles,
           all pages contents will be extracted and cleaned — if relevant —
           and concatenated into the instance :attr:`body` attribute.
-          The :attr:`next_page_url` attribute will be a ``list``
+          The :attr:`next_page_link` attribute will be a ``list``
           containing all sub-pages links. Note: the first link is the one
           you fed the extractor with ; it will not be repeated in the list.
         - or ``None``, if content was not given and url fetching returned
@@ -148,14 +148,14 @@ def ftr_process(url=None, content=None, config=None):
     if extractor.process(html=content):
 
         # This is recursive. Yeah.
-        if extractor.next_page_url is not None:
-            next_extractor = ftr_process(url=extractor.next_page_url)
+        if extractor.next_page_link is not None:
+            next_extractor = ftr_process(url=extractor.next_page_link)
             extractor.body += next_extractor.body
 
-            extractor.next_page_url = [extractor.next_page_url]
+            extractor.next_page_link = [extractor.next_page_link]
 
-            if next_extractor.next_page_url is not None:
-                extractor.next_page_url.extend(next_extractor.next_page_url)
+            if next_extractor.next_page_link is not None:
+                extractor.next_page_link.extend(next_extractor.next_page_link)
 
         return extractor
 
