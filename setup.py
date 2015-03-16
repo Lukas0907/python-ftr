@@ -21,8 +21,10 @@ setup(
     author="Olivier Cortès",
     author_email="contact@oliviercortes.com",
     description="HTML Article cleaner / extractor, Five-Filters compatible.",
+    long_description=open('README.md').read(),
     url="https://github.com/1flow/python-ftr",
     packages=find_packages(),
+    include_package_data=True,
     dependency_links=[
         'https://github.com/1flow/sparks/tarball/master#egg=sparks',
         'https://github.com/Karmak23/humanize/tarball/master#egg=humanize',
@@ -44,12 +46,13 @@ setup(
         'articles',
     ),
     license='AGPLv3',
-    long_description=(
-        "The [cache] variant is suited for django+celery setups where "
-        "Redis is available. It will cache website configs in Redis. "
-        "This module does not currently implement automatic extraction "
-        "(eg. without a website configuration). When it was ported from "
-        "PHP, its main purpose was to be integrated in a wider chain "
-        "That already does automatic extraction."
-    )
+    classifiers=[
+        "Programming Language :: Python",
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",  # NOQA
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 2.7",
+        "Topic :: Text Processing :: Filters",
+    ],
 )

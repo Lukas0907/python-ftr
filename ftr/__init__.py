@@ -20,6 +20,7 @@ License along with python-ftr. If not, see http://www.gnu.org/licenses/
 
 """
 
+# Import the sparks-managed version.
 from .version import version  # NOQA
 
 from .config import (  # NOQA
@@ -37,3 +38,6 @@ from .extractor import (  # NOQA
 from process import (  # NOQA
     ftr_process as process,
 )
+
+# Advertise version to external tools like Sentry.
+__version__ = version
