@@ -102,11 +102,11 @@ class ContentExtractor(object):
         self.tidied = False
         self.next_page_url = None
         self.title = None
-        self.author = []
+        self.author = set()
         self.language = None
         self.date = None
         self.body = None
-        self.failures = []
+        self.failures = set()
         self.success = False
 
         LOGGER.debug(u'Reset extractor instance to defaults/empty.')
@@ -253,7 +253,7 @@ class ContentExtractor(object):
     def _extract_author(self):
         """ Extract author(s) if not already done. """
 
-        if self.author:
+        if bool(self.author):
             return
 
         for pattern in self.config.author:
@@ -273,7 +273,7 @@ class ContentExtractor(object):
                     stripped_author = unicode(item).strip()
 
                 if stripped_author:
-                    self.author.append(stripped_author)
+                    self.author.add(stripped_author)
                     LOGGER.info(u'Author found: %s', stripped_author)
 
     def _extract_language(self):
@@ -443,7 +443,7 @@ class ContentExtractor(object):
 
         if self.title is None:
             if bool(self.config.title):
-                self.failures.append('title')
+                self.failures.add('title')
 
             title = readabilitized.title().strip()
 
@@ -452,11 +452,11 @@ class ContentExtractor(object):
                 LOGGER.info(u'Got a title in automatic mode.')
 
             else:
-                self.failures.append('title')
+                self.failures.add('title')
 
         if self.body is None:
             if bool(self.config.body):
-                self.failures.append('body')
+                self.failures.add('body')
 
             body = readabilitized.summary().strip()
 
@@ -465,12 +465,12 @@ class ContentExtractor(object):
                 LOGGER.info(u'Extracted a body in automatic mode.')
 
             else:
-                self.failures.append('body')
+                self.failures.add('body')
 
         for attr_name in ('date', 'language', 'author', ):
             if not bool(getattr(self, attr_name, None)):
                 if bool(getattr(self.config, attr_name, None)):
-                    self.failures.append(attr_name)
+                    self.failures.add(attr_name)
 
     def process(self, html, url=None, smart_tidy=True):
         u""" Process HTML content or URL.
@@ -553,7 +553,7 @@ class ContentExtractor(object):
         self._auto_extract_if_failed()
 
         if self.title is not None or self.body is not None \
-            or self.author is not None or self.date is not None \
+            or bool(self.author) or self.date is not None \
                 or self.language is not None:
             self.success = True
 
