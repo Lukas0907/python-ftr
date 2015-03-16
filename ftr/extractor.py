@@ -216,8 +216,13 @@ class ContentExtractor(object):
             if not items:
                 continue
 
+            if isinstance(items, basestring):
+                # In case xpath returns only one element.
+                items = [items]
+
             if len(items) == 1:
                 item = items[0]
+
                 try:
                     self.title = item.text
 
@@ -242,7 +247,7 @@ class ContentExtractor(object):
                 break
 
             else:
-                LOGGER.warning(u'%s items for title %s',
+                LOGGER.warning(u'Multiple items (%s) for title pattern %s.',
                                items, pattern)
 
     def _extract_author(self):
@@ -252,7 +257,14 @@ class ContentExtractor(object):
             return
 
         for pattern in self.config.author:
-            for item in self.parsed_tree.xpath(pattern):
+
+            items = self.parsed_tree.xpath(pattern)
+
+            if isinstance(items, basestring):
+                # In case xpath returns only one element.
+                items = [items]
+
+            for item in items:
                 try:
                     stripped_author = item.text.strip()
 
@@ -297,7 +309,14 @@ class ContentExtractor(object):
         found = False
 
         for pattern in self.config.date:
-            for item in self.parsed_tree.xpath(pattern):
+
+            items = self.parsed_tree.xpath(pattern)
+
+            if isinstance(items, basestring):
+                # In case xpath returns only one element.
+                items = [items]
+
+            for item in items:
                 try:
                     stripped_date = item.text.strip()
 
