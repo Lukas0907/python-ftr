@@ -40,7 +40,13 @@ except ImportError:
 
 from .config import ftr_get_config, SiteConfig, CACHE_TIMEOUT, cached
 from .extractor import ContentExtractor
-from sparks.utils.http import detect_encoding_from_requests_response
+
+try:
+    from sparks.utils.http import detect_encoding_from_requests_response
+
+except ImportError:
+    # same problem, same effect.
+    pass
 
 LOGGER = logging.getLogger(__name__)
 
