@@ -163,7 +163,23 @@ class ContentExtractor(object):
                                       self.config.parser)
 
         self.parser = etree.HTMLParser()
-        self.parsed_tree = etree.parse(StringIO(self.html), self.parser)
+
+        try:
+            self.parsed_tree = etree.parse(StringIO(self.html), self.parser)
+
+        except ValueError, e:
+            if u'Unicode strings with encoding declaration are not supported' \
+                    in unicode(e):
+
+                # For some reason, the HTML/XML declares another encoding
+                # in its meta tags. TODO: we should probably remove this
+                # meta tag, because the sparks detection mechanism usually
+                # does a pretty good job at finding it.
+                #
+                # For now, this will fail for anything other than utf-8 and
+                # make the program crash.
+                self.parsed_tree = etree.parse(StringIO(
+                    self.html.encode('utf-8')), self.parser)
 
         # Wanna use CSS selector?
         #
