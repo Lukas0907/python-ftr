@@ -256,6 +256,12 @@ class ContentExtractor(object):
                     # lxml.etree._Element, got _ElementStringResult)
                     pass
 
+                except AttributeError, e:
+                    if u'NoneType' not in unicode(e):
+                        LOGGER.exception(u'Could not remove title from '
+                                         u'document.')
+                    # implicit: else: this is begnin
+
                 except:
                     LOGGER.exception(u'Could not remove title from document.')
 
