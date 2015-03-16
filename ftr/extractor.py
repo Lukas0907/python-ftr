@@ -265,12 +265,18 @@ class ContentExtractor(object):
                 items = [items]
 
             for item in items:
-                try:
-                    stripped_author = item.text.strip()
 
-                except AttributeError:
+                if isinstance(items, basestring):
                     # '_ElementStringResult' object has no attribute 'text'
                     stripped_author = unicode(item).strip()
+
+                else:
+                    try:
+                        stripped_author = item.text.strip()
+
+                    except AttributeError:
+                        # We got a <div>…
+                        stripped_author = etree.tostring(item)
 
                 if stripped_author:
                     self.author.add(stripped_author)
@@ -317,12 +323,22 @@ class ContentExtractor(object):
                 items = [items]
 
             for item in items:
-                try:
-                    stripped_date = item.text.strip()
+                # import ipdb; ipdb.set_trace()
 
-                except AttributeError:
+                if isinstance(items, basestring):
                     # '_ElementStringResult' object has no attribute 'text'
                     stripped_date = unicode(item).strip()
+
+                else:
+                    try:
+                        stripped_date = item.text.strip()
+
+                    except AttributeError:
+                        # .text is None. We got a <div> item with span-only
+                        # content. The result will probably be completely
+                        # useless to a python developer, but at least we
+                        # didn't fail handling the siteconfig directive.
+                        stripped_date = etree.tostring(item)
 
                 if stripped_date:
                     # self.date = strtotime(trim(elems, "; \t\n\r\0\x0B"))
