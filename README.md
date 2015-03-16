@@ -11,6 +11,10 @@ A notable difference is that this python implementation will fetch the website c
 ## Installation
 
 ```
+# latest stable version published:
+pip install ftr
+
+# via github if PyPI is not yet up-to-date:
 pip install git+https://github.com/1flow/python-ftr@master#egg=ftr
 ```
 
