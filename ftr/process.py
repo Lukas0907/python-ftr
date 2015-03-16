@@ -30,8 +30,13 @@ have the HTML and the original URL handy.
     You should have received a copy of the GNU Affero General Public
     License along with python-ftr. If not, see http://www.gnu.org/licenses/
 """
-import requests
 import logging
+
+try:
+    import requests
+except ImportError:
+    # Happens during installation before setup.py finishes installing deps.
+    requests = None
 
 from .config import ftr_get_config, SiteConfig, CACHE_TIMEOUT, cached
 from .extractor import ContentExtractor
