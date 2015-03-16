@@ -394,7 +394,7 @@ class ContentExtractor(object):
 
         def is_descendant_node(parent, node):
             node = node.getparent()
-            while node:
+            while node is not None:
                 if node == parent:
                     return True
                 node = node.getparent()
@@ -450,8 +450,9 @@ class ContentExtractor(object):
                                 LOGGER.error(u'Pruning this item did not '
                                              u'work:\n\n%s\n\nWe got: “%s” '
                                              u'and skipped it.',
-                                             etree.tostring(item),
-                                             pruned_string)
+                                             etree.tostring(
+                                                 item).replace(u'\n', u''),
+                                             pruned_string.replace(u'\n', u''))
                                 pass
 
                         else:
@@ -503,6 +504,9 @@ class ContentExtractor(object):
             if not bool(getattr(self, attr_name, None)):
                 if bool(getattr(self.config, attr_name, None)):
                     self.failures.add(attr_name)
+                    LOGGER.warning(u'Could not extract any %s from %s.',
+                                   attr_name, getattr(self.config, attr_name))
+                    # import ipdb; ipdb.set_trace()
 
     def process(self, html, url=None, smart_tidy=True):
         u""" Process HTML content or URL.
