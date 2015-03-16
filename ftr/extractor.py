@@ -100,7 +100,7 @@ class ContentExtractor(object):
         self.html = None
         self.parsed_tree = None
         self.tidied = False
-        self.next_page_url = None
+        self.next_page_link = None
         self.title = None
         self.author = set()
         self.language = None
@@ -187,10 +187,10 @@ class ContentExtractor(object):
                 item = items[0]
 
                 if 'href' in item.keys():
-                    self.next_page_url = item.values()[0]
+                    self.next_page_link = item.values()[0]
 
                 else:
-                    self.next_page_url = item.text.strip()
+                    self.next_page_link = item.text.strip()
 
                 # First found link is the good one.
                 break
