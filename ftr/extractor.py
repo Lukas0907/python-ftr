@@ -425,18 +425,36 @@ class ContentExtractor(object):
 
                     is_descendant = False
 
-                    for parent in self.body:
+                    for parent in body:
                         if (is_descendant_node(parent, item)):
                             is_descendant = True
                             break
 
                     if not is_descendant:
+
                         if self.config.prune:
-                            etree.SubElement(
-                                body,
-                                etree.parse(Document(item).summary(),
-                                            self.parser)
-                            )
+
+                            # Clean with readability. Needs
+                            # to-string conversion first.
+                            pruned_string = Document(
+                                etree.tostring(item)).summary()
+
+                            # Re-parse the readability string
+                            # output and include it in our body.
+                            new_tree = etree.parse(
+                                StringIO(pruned_string), self.parser)
+
+                            try:
+                                body.append(
+                                    new_tree.xpath('//html/body/div/div')[0]
+                                )
+                            except IndexError:
+                                LOGGER.error(u'Pruning this item did not '
+                                             u'work:\n\n%s\n\nWe got: “%s” '
+                                             u'and skipped it.',
+                                             etree.tostring(item),
+                                             pruned_string)
+                                pass
 
                         else:
                             etree.SubElement(body, item)
