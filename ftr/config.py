@@ -29,6 +29,8 @@ import os
 import re
 import logging
 
+LOGGER = logging.getLogger(__name__)
+
 try:
     from ordered_set import OrderedSet
 
@@ -41,7 +43,9 @@ except ImportError:
 try:
     from cacheops import cached
 
-except ImportError:
+except Exception, e:
+    LOGGER.warning(u'Cacheops seems not installed or not importable '
+                   u'(exception was: %s). Running without cache.', e)
     from functools import wraps
 
     def cached(*a, **kw):
@@ -54,7 +58,6 @@ except ImportError:
             return wrapper
         return decorator
 
-LOGGER = logging.getLogger(__name__)
 
 # defaults to 3 days of caching for website configuration
 CACHE_TIMEOUT = int(os.environ.get('PYTHON_FTR_CACHE_TIMEOUT', 345600))
