@@ -102,11 +102,11 @@ class ContentExtractor(object):
         self.tidied = False
         self.next_page_url = None
         self.title = None
-        self.author = []
+        self.author = set()
         self.language = None
         self.date = None
         self.body = None
-        self.failures = []
+        self.failures = set()
         self.success = False
 
         LOGGER.debug(u'Reset extractor instance to defaults/empty.')
@@ -253,7 +253,7 @@ class ContentExtractor(object):
     def _extract_author(self):
         """ Extract author(s) if not already done. """
 
-        if self.author:
+        if bool(self.author):
             return
 
         for pattern in self.config.author:
@@ -265,15 +265,21 @@ class ContentExtractor(object):
                 items = [items]
 
             for item in items:
-                try:
-                    stripped_author = item.text.strip()
 
-                except AttributeError:
+                if isinstance(items, basestring):
                     # '_ElementStringResult' object has no attribute 'text'
                     stripped_author = unicode(item).strip()
 
+                else:
+                    try:
+                        stripped_author = item.text.strip()
+
+                    except AttributeError:
+                        # We got a <div>…
+                        stripped_author = etree.tostring(item)
+
                 if stripped_author:
-                    self.author.append(stripped_author)
+                    self.author.add(stripped_author)
                     LOGGER.info(u'Author found: %s', stripped_author)
 
     def _extract_language(self):
@@ -317,12 +323,22 @@ class ContentExtractor(object):
                 items = [items]
 
             for item in items:
-                try:
-                    stripped_date = item.text.strip()
+                # import ipdb; ipdb.set_trace()
 
-                except AttributeError:
+                if isinstance(items, basestring):
                     # '_ElementStringResult' object has no attribute 'text'
                     stripped_date = unicode(item).strip()
+
+                else:
+                    try:
+                        stripped_date = item.text.strip()
+
+                    except AttributeError:
+                        # .text is None. We got a <div> item with span-only
+                        # content. The result will probably be completely
+                        # useless to a python developer, but at least we
+                        # didn't fail handling the siteconfig directive.
+                        stripped_date = etree.tostring(item)
 
                 if stripped_date:
                     # self.date = strtotime(trim(elems, "; \t\n\r\0\x0B"))
@@ -409,18 +425,36 @@ class ContentExtractor(object):
 
                     is_descendant = False
 
-                    for parent in self.body:
+                    for parent in body:
                         if (is_descendant_node(parent, item)):
                             is_descendant = True
                             break
 
                     if not is_descendant:
+
                         if self.config.prune:
-                            etree.SubElement(
-                                body,
-                                etree.parse(Document(item).summary(),
-                                            self.parser)
-                            )
+
+                            # Clean with readability. Needs
+                            # to-string conversion first.
+                            pruned_string = Document(
+                                etree.tostring(item)).summary()
+
+                            # Re-parse the readability string
+                            # output and include it in our body.
+                            new_tree = etree.parse(
+                                StringIO(pruned_string), self.parser)
+
+                            try:
+                                body.append(
+                                    new_tree.xpath('//html/body/div/div')[0]
+                                )
+                            except IndexError:
+                                LOGGER.error(u'Pruning this item did not '
+                                             u'work:\n\n%s\n\nWe got: “%s” '
+                                             u'and skipped it.',
+                                             etree.tostring(item),
+                                             pruned_string)
+                                pass
 
                         else:
                             etree.SubElement(body, item)
@@ -443,7 +477,7 @@ class ContentExtractor(object):
 
         if self.title is None:
             if bool(self.config.title):
-                self.failures.append('title')
+                self.failures.add('title')
 
             title = readabilitized.title().strip()
 
@@ -452,11 +486,11 @@ class ContentExtractor(object):
                 LOGGER.info(u'Got a title in automatic mode.')
 
             else:
-                self.failures.append('title')
+                self.failures.add('title')
 
         if self.body is None:
             if bool(self.config.body):
-                self.failures.append('body')
+                self.failures.add('body')
 
             body = readabilitized.summary().strip()
 
@@ -465,12 +499,12 @@ class ContentExtractor(object):
                 LOGGER.info(u'Extracted a body in automatic mode.')
 
             else:
-                self.failures.append('body')
+                self.failures.add('body')
 
         for attr_name in ('date', 'language', 'author', ):
             if not bool(getattr(self, attr_name, None)):
                 if bool(getattr(self.config, attr_name, None)):
-                    self.failures.append(attr_name)
+                    self.failures.add(attr_name)
 
     def process(self, html, url=None, smart_tidy=True):
         u""" Process HTML content or URL.
@@ -553,7 +587,7 @@ class ContentExtractor(object):
         self._auto_extract_if_failed()
 
         if self.title is not None or self.body is not None \
-            or self.author is not None or self.date is not None \
+            or bool(self.author) or self.date is not None \
                 or self.language is not None:
             self.success = True
 
