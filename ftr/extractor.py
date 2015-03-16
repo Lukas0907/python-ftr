@@ -487,7 +487,7 @@ class ContentExtractor(object):
                                 pass
 
                         else:
-                            etree.SubElement(body, item)
+                            body.append(item)
 
                         appended_something = True
 
