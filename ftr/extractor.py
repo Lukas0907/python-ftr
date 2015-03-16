@@ -266,7 +266,7 @@ class ContentExtractor(object):
 
             for item in items:
 
-                if isinstance(items, basestring):
+                if isinstance(item, basestring):
                     # '_ElementStringResult' object has no attribute 'text'
                     stripped_author = unicode(item).strip()
 
@@ -323,9 +323,7 @@ class ContentExtractor(object):
                 items = [items]
 
             for item in items:
-                # import ipdb; ipdb.set_trace()
-
-                if isinstance(items, basestring):
+                if isinstance(item, basestring):
                     # '_ElementStringResult' object has no attribute 'text'
                     stripped_date = unicode(item).strip()
 
