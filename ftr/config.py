@@ -32,7 +32,9 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 try:
+    import requests
     from ordered_set import OrderedSet
+    from sparks.utils.http import split_url
 
 except ImportError:
     # Avoid a crash during setup.py
@@ -132,8 +134,6 @@ def ftr_get_config(website_url, exact_host_match=False):
         part if needed by someone. PRs welcome as always.
     """
 
-    import requests
-    from sparks.utils.http import split_url
 
     repositories = [
         x.strip() for x in os.environ.get(
