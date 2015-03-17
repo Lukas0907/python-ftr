@@ -34,6 +34,7 @@ import logging
 
 try:
     import requests
+
 except ImportError:
     # Happens during installation before setup.py finishes installing deps.
     requests = None
@@ -42,7 +43,10 @@ from .config import ftr_get_config, SiteConfig, CACHE_TIMEOUT, cached
 from .extractor import ContentExtractor
 
 try:
-    from sparks.utils.http import detect_encoding_from_requests_response
+    from sparks.utils.http import (
+        detect_encoding_from_requests_response,
+        split_url,
+    )
 
 except ImportError:
     # same problem, same effect.
@@ -73,6 +77,21 @@ def sanitize_next_page_link(next_page_link, base_url):
             # We have some "?current_page=2" scheme.
             next_page_link = base_url + next_page_link
 
+        if next_page_link.startswith(u'/'):
+            # We have a server-relative path.
+
+            try:
+                proto, host_and_port, remaining = split_url(base_url)
+
+            except:
+                LOGGER.error(u'Could not split “%s” to get schema/host parts, '
+                             u'next_page_link “%s” will be unusable.',
+                             base_url, next_page_link)
+
+            else:
+                next_page_link = '{0}://{1}{2}'.format(proto,
+                                                       host_and_port,
+                                                       next_page_link)
         else:
             LOGGER.warning(u'Unimplemented scheme in '
                            u'next_page_link %s',
