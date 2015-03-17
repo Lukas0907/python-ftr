@@ -64,6 +64,10 @@ except Exception, e:
 # defaults to 3 days of caching for website configuration
 CACHE_TIMEOUT = int(os.environ.get('PYTHON_FTR_CACHE_TIMEOUT', 345600))
 
+# test.py will set this to any random integer to fake cache
+# invalidation without invalidating the fetched HTML pages.
+FTR_CONFIG_ALWAYS_RELOAD = 0
+
 HOSTNAME_REGEX = re.compile(
     r'/^(([a-z0-9-]*[a-z0-9])\.)*([a-z0-9-]*[a-z0-9])$/',
     re.IGNORECASE | re.UNICODE
@@ -102,7 +106,7 @@ class InvalidSiteConfig(SiteConfigException):
     pass
 
 
-@cached(timeout=CACHE_TIMEOUT)
+@cached(timeout=CACHE_TIMEOUT, extra=FTR_CONFIG_ALWAYS_RELOAD)
 def ftr_get_config(website_url, exact_host_match=False):
     """ Download the Five Filters config from centralized repositories.
 
