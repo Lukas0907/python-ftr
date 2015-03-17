@@ -203,12 +203,13 @@ class ContentExtractor(object):
                 item = items[0]
 
                 if 'href' in item.keys():
-                    self.next_page_link = item.values()[0]
+                    self.next_page_link = item.get('href')
 
                 else:
                     self.next_page_link = item.text.strip()
 
-                LOGGER.info(u'Found next page link: %s.', self.next_page_link)
+                LOGGER.info(u'Found next page link: %s.',
+                            self.next_page_link)
 
                 # First found link is the good one.
                 break
