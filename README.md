@@ -1,9 +1,19 @@
 
 # python-ftr
 
-FTR is *partial* (re-)implementation of Five-Filters extractor in Python. It cleans up HTML web pages and extract their content for comfortable reading. It uses a centralized and mutualized repository of configuration files to parse websites at the most precise level possible, and fallbacks to `readability` if no configuration is found.
 
-A notable difference is that this python implementation will fetch the website configuration from a centralized repository on the internet on the fly if no configuration is found locally. 
+FTR is a *partial* (re-)implementation of the [Five-Filters extractor
+](http://fivefilters.org/) in Python.
+
+It cleans up HTML web pages and extract their content and metadata for a
+more comfortable reading experience (or whatever you need it for). It uses
+a centralized and mutualized repository of configuration files to parse
+websites at the most precise level possible, and fallbacks to the well-known
+`readability` automatic extractor if no configuration is found.
+
+A notable difference is that this python implementation will fetch the
+website configuration from a centralized repository on the internet on the
+fly if no configuration is found locally.
 
 [Full documentation is available](http://python-ftr.readthedocs.org).
 
