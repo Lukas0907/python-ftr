@@ -326,8 +326,8 @@ def ftr_string_to_instance(config_string):
             config.replace_string.append(value)
 
         else:
-            LOGGER.warning(u'Unsupported directive %s = %s on line #%s.',
-                           key, value, line_number)
+            LOGGER.warning(u'Unsupported directive “%s” on line #%s.',
+                           line_content, line_number)
 
     find_count = len(config.find_string)
     replace_count = len(config.replace_string)
