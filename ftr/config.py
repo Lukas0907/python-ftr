@@ -110,6 +110,8 @@ class InvalidSiteConfig(SiteConfigException):
 def ftr_get_config(website_url, exact_host_match=False):
     """ Download the Five Filters config from centralized repositories.
 
+    Repositories can be local if you need to override siteconfigs.
+
     The first entry found is returned. If no configuration is found,
     `None` is returned. If :mod:`cacheops` is installed, the result will
     be cached with a default expiration delay of 3 days.
@@ -138,12 +140,20 @@ def ftr_get_config(website_url, exact_host_match=False):
         part if needed by someone. PRs welcome as always.
     """
 
+    def check_requests_result(result):
+        return (
+            u'text/plain' in result.headers.get('content-type')
+            and u'<!DOCTYPE html>' not in result.text
+            and u'<html ' not in result.text
+            and u'</html>' not in result.text
+        )
 
     repositories = [
         x.strip() for x in os.environ.get(
             'PYTHON_FTR_REPOSITORIES',
-            u'https://raw.githubusercontent.com/1flow/ftr-site-config/master/ '
-            u'https://raw.githubusercontent.com/fivefilters/ftr-site-config/master/'  # NOQA
+            os.path.expandvars(u'${HOME}/sources/ftr-site-config') + u' '
+            + u'https://raw.githubusercontent.com/1flow/ftr-site-config/master/ '  # NOQA
+            + u'https://raw.githubusercontent.com/fivefilters/ftr-site-config/master/'  # NOQA
         ).split() if x.strip() != u'']
 
     try:
@@ -174,30 +184,41 @@ def ftr_get_config(website_url, exact_host_match=False):
         # try, in turn:
         #   website.ext.txt
         #   .website.ext.txt
+
         for domain_name in domain_names:
 
             skip_repository = False
 
-            for full_name in (
-                u'{0}{1}.txt'.format(repository, domain_name),
-                u'{0}.{1}.txt'.format(repository, domain_name),
+            for txt_siteconfig_name in (
+                u'{0}.txt'.format(domain_name),
+                u'.{0}.txt'.format(domain_name),
             ):
-                result = requests.get(full_name)
+                if repository.startswith('http'):
+                    siteconfig_url = repository + txt_siteconfig_name
 
-                if result.status_code == requests.codes.ok:
-                    if u'text/plain' not in result.headers.get('content-type') \
-                        or u'<!DOCTYPE html>' in result.text \
-                        or u'<html ' in result.text \
-                            and u'</html>' in result.text:
-                        LOGGER.error(u'“%s” repository URL does not return '
-                                     u'RAW plain text results.')
+                    result = requests.get(siteconfig_url)
 
-                        skip_repository = True
-                        break
+                    if result.status_code == requests.codes.ok:
+                        if not check_requests_result(result):
+                            LOGGER.error(u'“%s” repository URL does not '
+                                         u'return text/plain results.')
+                            skip_repository = True
+                            break
 
-                    LOGGER.info(u'Using siteconfig for domain %s from %s.',
-                                domain_name, full_name)
-                    return result.text
+                        LOGGER.info(u'Using remote siteconfig for domain '
+                                    u'%s from %s.', domain_name,
+                                    siteconfig_url)
+                        return result.text
+
+                else:
+                    filename = os.path.join(repository, txt_siteconfig_name)
+
+                    if os.path.exists(filename):
+                        LOGGER.info(u'Using local siteconfig for domain '
+                                    u'%s from %s.', domain_name,
+                                    filename)
+                        with open(filename, 'rb') as f:
+                            return f.read()
 
                 if skip_repository:
                     break
