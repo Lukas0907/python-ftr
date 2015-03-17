@@ -27,6 +27,7 @@ named after the website they hold rules for.
 """
 import os
 import re
+import codecs
 import logging
 
 LOGGER = logging.getLogger(__name__)
@@ -217,7 +218,7 @@ def ftr_get_config(website_url, exact_host_match=False):
                         LOGGER.info(u'Using local siteconfig for domain '
                                     u'%s from %s.', domain_name,
                                     filename)
-                        with open(filename, 'rb') as f:
+                        with codecs.open(filename, 'rb', encoding='utf8') as f:
                             return f.read()
 
                 if skip_repository:
