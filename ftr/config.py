@@ -271,6 +271,9 @@ def ftr_string_to_instance(config_string):
                            line_content, line_number)
             continue
 
+        # handle some very rare title()d directives.
+        key = key.lower()
+
         if not key or (not value and key != 'replace_string'):
             LOGGER.warning(u'Empty key or value in “%s” on line #%s.',
                            line_content, line_number)
