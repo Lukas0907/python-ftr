@@ -30,6 +30,8 @@ have the HTML and the original URL handy.
     You should have received a copy of the GNU Affero General Public
     License along with python-ftr. If not, see http://www.gnu.org/licenses/
 """
+
+import os
 import logging
 
 try:
@@ -53,6 +55,10 @@ except ImportError:
     pass
 
 LOGGER = logging.getLogger(__name__)
+
+if bool(os.environ.get('FTR_TEST_ENABLE_SQLITE_LOGGING', False)):
+    from ftr.app import SQLiteHandler
+    LOGGER.addHandler(SQLiteHandler(store_only=('siteconfig', )))
 
 
 @cached(timeout=CACHE_TIMEOUT)

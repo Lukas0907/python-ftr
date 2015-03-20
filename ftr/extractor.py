@@ -18,7 +18,10 @@ u""" Python FTR content extractor class and utils.
     You should have received a copy of the GNU Affero General Public
     License along with python-ftr. If not, see http://www.gnu.org/licenses/
 """
+
+import os
 import logging
+
 try:
     from lxml import etree
     # from lxml.cssselect import CSSSelector
@@ -33,6 +36,11 @@ except ImportError:
 from StringIO import StringIO
 
 LOGGER = logging.getLogger(__name__)
+
+if bool(os.environ.get('FTR_TEST_ENABLE_SQLITE_LOGGING', False)):
+    LOGGER.info(u'Activating SQL logger for FTR testing environment.')
+    from ftr.app import SQLiteHandler
+    LOGGER.addHandler(SQLiteHandler(store_only=('siteconfig', )))
 
 
 try:
@@ -558,8 +566,9 @@ class ContentExtractor(object):
             if not bool(getattr(self, attr_name, None)):
                 if bool(getattr(self.config, attr_name, None)):
                     self.failures.add(attr_name)
-                    LOGGER.warning(u'Could not extract any %s from %s.',
-                                   attr_name, getattr(self.config, attr_name),
+                    LOGGER.warning(u'Could not extract any %s from XPath '
+                                   u'expression(s) %s.', attr_name,
+                                   getattr(self.config, attr_name),
                                    extra={'siteconfig': self.config.host})
                     # import ipdb; ipdb.set_trace()
 

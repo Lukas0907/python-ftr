@@ -32,6 +32,10 @@ import logging
 
 LOGGER = logging.getLogger(__name__)
 
+if bool(os.environ.get('FTR_TEST_ENABLE_SQLITE_LOGGING', False)):
+    from ftr.app import SQLiteHandler
+    LOGGER.addHandler(SQLiteHandler(store_only=('siteconfig', )))
+
 try:
     import requests
     from ordered_set import OrderedSet
