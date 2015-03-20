@@ -16,6 +16,7 @@ import time
 import logging
 import sqlite3
 
+from lxml import etree
 from ordered_set import OrderedSet
 from datetime import datetime
 from humanize.time import naturaldelta
@@ -39,16 +40,18 @@ LOGGER = logging.getLogger(__name__)
 
 class OrderedEncoder(json.JSONEncoder):
 
-    """ Turn OrderedSet to list for JSON encoding.
+    """ JSON Encode OrderedSet & LXML Element.
 
-    As sets are already unique, and logs will be used only in the flask app,
-    that's perfectly OK. But using it for anything else should imply writing
-    a corresponding encoder.
+    OrderedSet are turned into lists, Elements are turned into strings.
+
+    This encoder is suited to store logging messages into SQLite.
     """
 
     def default(self, obj):
         if isinstance(obj, OrderedSet):
             return list(obj)
+        if isinstance(obj, etree._Element):
+            return etree.tostring(obj)
         return json.JSONEncoder.default(self, obj)
 
 
