@@ -129,7 +129,8 @@ def ftr_get_config(website_url, exact_host_match=False):
         no check is performed yet, be careful of what you pass.
     :type website_url: str or unicode
 
-    :returns: string -- the loaded site config, if found.
+    :returns: tuple -- the loaded site config (as unicode string) and
+        the hostname matched (unicode string too).
     :raises: :class:`SiteConfigNotFound` if no config could be found.
 
     .. note:: Whatever ``exact_host_match`` value is, the ``www`` part is
@@ -208,8 +209,9 @@ def ftr_get_config(website_url, exact_host_match=False):
 
                         LOGGER.info(u'Using remote siteconfig for domain '
                                     u'%s from %s.', domain_name,
-                                    siteconfig_url)
-                        return result.text
+                                    siteconfig_url, extra={
+                                        'siteconfig': domain_name})
+                        return result.text, txt_siteconfig_name[:-4]
 
                 else:
                     filename = os.path.join(repository, txt_siteconfig_name)
@@ -217,9 +219,10 @@ def ftr_get_config(website_url, exact_host_match=False):
                     if os.path.exists(filename):
                         LOGGER.info(u'Using local siteconfig for domain '
                                     u'%s from %s.', domain_name,
-                                    filename)
+                                    filename, extra={
+                                        'siteconfig': domain_name})
                         with codecs.open(filename, 'rb', encoding='utf8') as f:
-                            return f.read()
+                            return f.read(), txt_siteconfig_name[:-4]
 
                 if skip_repository:
                     break
@@ -370,6 +373,10 @@ class SiteConfig(object):
         if host is not None:
             self.load(host)
 
+        # This `host` attribute will become the
+        # `siteconfig` extra argument in logging calls.
+        self.host = host
+
         if site_config_text is not None:
             self.append(ftr_string_to_instance(site_config_text))
 
@@ -458,13 +465,14 @@ class SiteConfig(object):
         """
 
         # Can raise a SiteConfigNotFound, intentionally bubbled.
-        config = ftr_get_config(host, exact_host_match)
+        config_string, host_string = ftr_get_config(host, exact_host_match)
 
-        if config is None:
-            LOGGER.error(u'Error while loading configuration.')
+        if config_string is None:
+            LOGGER.error(u'Error while loading configuration.',
+                         extra={'siteconfig': host_string})
             return
 
-        self.append(ftr_string_to_instance(config))
+        self.append(ftr_string_to_instance(config_string))
 
     def append(self, newconfig):
         """ Append another site config to current instance.

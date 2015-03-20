@@ -163,8 +163,8 @@ def ftr_process(url=None, content=None, config=None, base_url=None):
             result = requests_get(url)
 
             if result.status_code != requests.codes.ok:
-                LOGGER.error(u'Wrong status code in return while getting “%s”',
-                             url)
+                LOGGER.error(u'Wrong status code in return while getting '
+                             u'“%s”.', url)
                 return None
 
             # Override before accessing result.text ; see `requests` doc.
@@ -177,12 +177,13 @@ def ftr_process(url=None, content=None, config=None, base_url=None):
             content = result.text
 
         except:
-            LOGGER.error(u'Content could not be fetched from URL %s', url)
+            LOGGER.error(u'Content could not be fetched from URL %s.', url)
             raise
 
     if config is None:
         # This can eventually raise SiteConfigNotFound
-        config = SiteConfig(site_config_text=ftr_get_config(url))
+        config_string, matched_host = ftr_get_config(url)
+        config = SiteConfig(site_config_text=config_string, host=matched_host)
 
     extractor = ContentExtractor(config)
 
