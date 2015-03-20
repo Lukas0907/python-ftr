@@ -28,7 +28,11 @@ FTR_SITECONFIG_PATH = os.environ.get(
 # Do not cache this, it's a generator and do not cost a lot, anyway.
 # @ftr.config.cached(ftr.config.CACHE_TIMEOUT)
 def load_test_urls():
-    """ Return all `test_url` directives values from all local siteconfig. """
+    """ Yield all `test_url` directives values from all local siteconfig.
+
+    If a siteconfig doesn't have any, a NoTestUrlException is yielded, not
+    raised, for the caller to know it.
+    """
 
     for url in (
         'http://www.lefigaro.fr/environnement/2011/11/10/01029-20111110ARTFIG00801-la-chine-confrontee-a-un-immense-defi-ecologique.php',  # NOQA
@@ -50,8 +54,7 @@ def load_test_urls():
                             got_test_url = True
 
                     if not got_test_url:
-                        LOGGER.critical(u'No test URL in %s!', filename,
-                                        extra={'siteconfig': filename[:-4]})
+                        yield ftr.NoTestUrlException(filename, filename[:-4])
 
 
 def test():
@@ -83,10 +86,15 @@ def test():
 
     for index, item in enumerate(load_test_urls()):
 
-        url, siteconfig = item
-
         if index < START_AT:
             continue
+
+        if isinstance(item, ftr.NoTestUrlException):
+            LOGGER.critical(u'No test URL in %s!', item.filename,
+                            extra={'siteconfig': item.siteconfig_name})
+            continue
+
+        url, siteconfig = item
 
         LOGGER.info(u'Testing URL #%s %s…', index, url,
                     extra={'siteconfig': siteconfig})

@@ -111,6 +111,18 @@ class InvalidSiteConfig(SiteConfigException):
     pass
 
 
+class NoTestUrlException(SiteConfigException):
+
+    """ Raised when a site config does not contain any test URL. """
+
+    def __init__(self, filename, siteconfig_name, *args, **kwargs):
+        """ pep257, you know how MUCH I love you. """
+        self.filename = filename
+        self.siteconfig_name = siteconfig_name
+
+        super(NoTestUrlException, self).__init__(*args, **kwargs)
+
+
 @cached(timeout=CACHE_TIMEOUT, extra=FTR_CONFIG_ALWAYS_RELOAD)
 def ftr_get_config(website_url, exact_host_match=False):
     """ Download the Five Filters config from centralized repositories.
@@ -225,6 +237,7 @@ def ftr_get_config(website_url, exact_host_match=False):
                                     u'%s from %s.', domain_name,
                                     filename, extra={
                                         'siteconfig': domain_name})
+
                         with codecs.open(filename, 'rb', encoding='utf8') as f:
                             return f.read(), txt_siteconfig_name[:-4]
 
@@ -370,18 +383,25 @@ class SiteConfig(object):
         return u'title: %s, body: %s' % (self.title, self.body)
 
     def __init__(self, host=None, site_config_text=None):
-        """ Load a first config, either from a hostname or a string config. """
+        """ Load a first config, either from a string config or a hostname.
+
+        If both are not empty, only `site_config_text` is used (eg. `host`
+        is stored but is used to load a siteconfig).
+        """
 
         self.reset()
-
-        if host is not None:
-            self.load(host)
 
         # This `host` attribute will become the
         # `siteconfig` extra argument in logging calls.
         self.host = host
 
-        if site_config_text is not None:
+        # We load only one of them, not both.
+        # site_config_text has precedence for easy overriding.
+        if site_config_text is None:
+            if host is not None:
+                self.load(host)
+
+        else:
             self.append(ftr_string_to_instance(site_config_text))
 
     def reset(self):
@@ -398,6 +418,13 @@ class SiteConfig(object):
 
         # Use first matching element as date (0 or more xpath expressions)
         self.date = OrderedSet()
+
+        # Put language here. It's not supported in siteconfig syntax,
+        # but having it here allows more generic handling in extractor.
+        self.language = (
+            '//html[@lang]/@lang',
+            '//meta[@name="DC.language"]/@content',
+        )
 
         # Strip elements matching these xpath expressions (0 or more)
         self.strip = OrderedSet()
@@ -495,6 +522,8 @@ class SiteConfig(object):
         # Check for commands where we accept multiple statements (no test_url)
         for attr_name in (
             'title', 'body', 'author', 'date',
+            # `language` is fixed in reset() and
+            # not supported in siteconfig syntax.
             'strip', 'strip_id_or_class', 'strip_image_src',
             'single_page_link', 'single_page_link_in_feed',
             'next_page_link', 'http_header'
