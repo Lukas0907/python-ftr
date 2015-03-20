@@ -237,6 +237,7 @@ def ftr_get_config(website_url, exact_host_match=False):
                                     u'%s from %s.', domain_name,
                                     filename, extra={
                                         'siteconfig': domain_name})
+
                         with codecs.open(filename, 'rb', encoding='utf8') as f:
                             return f.read(), txt_siteconfig_name[:-4]
 
@@ -382,18 +383,25 @@ class SiteConfig(object):
         return u'title: %s, body: %s' % (self.title, self.body)
 
     def __init__(self, host=None, site_config_text=None):
-        """ Load a first config, either from a hostname or a string config. """
+        """ Load a first config, either from a string config or a hostname.
+
+        If both are not empty, only `site_config_text` is used (eg. `host`
+        is stored but is used to load a siteconfig).
+        """
 
         self.reset()
-
-        if host is not None:
-            self.load(host)
 
         # This `host` attribute will become the
         # `siteconfig` extra argument in logging calls.
         self.host = host
 
-        if site_config_text is not None:
+        # We load only one of them, not both.
+        # site_config_text has precedence for easy overriding.
+        if site_config_text is None:
+            if host is not None:
+                self.load(host)
+
+        else:
             self.append(ftr_string_to_instance(site_config_text))
 
     def reset(self):
