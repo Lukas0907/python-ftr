@@ -419,6 +419,13 @@ class SiteConfig(object):
         # Use first matching element as date (0 or more xpath expressions)
         self.date = OrderedSet()
 
+        # Put language here. It's not supported in siteconfig syntax,
+        # but having it here allows more generic handling in extractor.
+        self.language = (
+            '//html[@lang]/@lang',
+            '//meta[@name="DC.language"]/@content',
+        )
+
         # Strip elements matching these xpath expressions (0 or more)
         self.strip = OrderedSet()
 
@@ -515,6 +522,8 @@ class SiteConfig(object):
         # Check for commands where we accept multiple statements (no test_url)
         for attr_name in (
             'title', 'body', 'author', 'date',
+            # `language` is fixed in reset() and
+            # not supported in siteconfig syntax.
             'strip', 'strip_id_or_class', 'strip_image_src',
             'single_page_link', 'single_page_link_in_feed',
             'next_page_link', 'http_header'

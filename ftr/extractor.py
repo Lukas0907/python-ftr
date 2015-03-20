@@ -330,10 +330,7 @@ class ContentExtractor(object):
 
         found = False
 
-        for pattern in (
-            '//html[@lang]/@lang',
-            '//meta[@name="DC.language"]/@content',
-        ):
+        for pattern in self.config.language:
             for item in self.parsed_tree.xpath(pattern):
                 stripped_language = item.strip()
 
