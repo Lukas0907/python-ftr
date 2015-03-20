@@ -259,7 +259,7 @@ class ContentExtractor(object):
                     # '_ElementStringResult' object has no attribute 'text'
                     self.title = unicode(item).strip()
 
-                LOGGER.info(u'title set to “%s”.', self.title,
+                LOGGER.info(u'Title extracted: “%s”.', self.title,
                             extra={'siteconfig': self.config.host})
 
                 try:
@@ -319,7 +319,7 @@ class ContentExtractor(object):
 
                 if stripped_author:
                     self.author.add(stripped_author)
-                    LOGGER.info(u'Author found: %s.', stripped_author,
+                    LOGGER.info(u'Author extracted: %s.', stripped_author,
                                 extra={'siteconfig': self.config.host})
 
     def _extract_language(self):
@@ -336,7 +336,7 @@ class ContentExtractor(object):
 
                 if stripped_language:
                     self.language = stripped_language
-                    LOGGER.info(u'Language found: %s.', stripped_language,
+                    LOGGER.info(u'Language extracted: %s.', stripped_language,
                                 extra={'siteconfig': self.config.host})
                     found = True
                     break
@@ -379,7 +379,7 @@ class ContentExtractor(object):
                 if stripped_date:
                     # self.date = strtotime(trim(elems, "; \t\n\r\0\x0B"))
                     self.date = stripped_date
-                    LOGGER.info(u'Date found: %s.', stripped_date,
+                    LOGGER.info(u'Date extracted: %s.', stripped_date,
                                 extra={'siteconfig': self.config.host})
                     found = True
                     break
@@ -502,8 +502,8 @@ class ContentExtractor(object):
                                     failed = True
 
                             if failed:
-                                LOGGER.error(u'Pruning this item did not '
-                                             u'work:\n\n%s\n\nWe got: “%s” '
+                                LOGGER.error(u'Pruning item failed:'
+                                             u'\n\n%s\n\nWe got: “%s” '
                                              u'and skipped it.',
                                              etree.tostring(
                                                  item).replace(u'\n', u''),
@@ -539,7 +539,7 @@ class ContentExtractor(object):
 
             if title:
                 self.title = title
-                LOGGER.info(u'Got a title in automatic mode.',
+                LOGGER.info(u'Title extracted in automatic mode.',
                             extra={'siteconfig': self.config.host})
 
             else:
@@ -553,7 +553,7 @@ class ContentExtractor(object):
 
             if body:
                 self.body = body
-                LOGGER.info(u'Extracted a body in automatic mode.',
+                LOGGER.info(u'Body extracted in automatic mode.',
                             extra={'siteconfig': self.config.host})
 
             else:
@@ -565,7 +565,7 @@ class ContentExtractor(object):
                     self.failures.add(attr_name)
                     LOGGER.warning(u'Could not extract any %s from XPath '
                                    u'expression(s) %s.', attr_name,
-                                   getattr(self.config, attr_name),
+                                   u', '.join(getattr(self.config, attr_name)),
                                    extra={'siteconfig': self.config.host})
                     # import ipdb; ipdb.set_trace()
 
