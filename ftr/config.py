@@ -111,6 +111,18 @@ class InvalidSiteConfig(SiteConfigException):
     pass
 
 
+class NoTestUrlException(SiteConfigException):
+
+    """ Raised when a site config does not contain any test URL. """
+
+    def __init__(self, filename, siteconfig_name, *args, **kwargs):
+        """ pep257, you know how MUCH I love you. """
+        self.filename = filename
+        self.siteconfig_name = siteconfig_name
+
+        super(NoTestUrlException, self).__init__(*args, **kwargs)
+
+
 @cached(timeout=CACHE_TIMEOUT, extra=FTR_CONFIG_ALWAYS_RELOAD)
 def ftr_get_config(website_url, exact_host_match=False):
     """ Download the Five Filters config from centralized repositories.

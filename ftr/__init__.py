@@ -33,6 +33,7 @@ from .config import (  # NOQA
     SiteConfigException,
     SiteConfigNotFound,
     InvalidSiteConfig,
+    NoTestUrlException,
 )
 
 from .extractor import (  # NOQA
