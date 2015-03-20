@@ -33,6 +33,13 @@ To run the testsuite::
 
 
 Then head to `localhost:5000 <http://localhost:5000>`_ to see the results.
+You should get something like that:
+
+.. image:: testsuite_webapp_001.png
+    :align: center
+
+.. image:: testsuite_webapp_002.png
+    :align: center
 
 You can easily run the testsuite in a cron job. It will clear the logs at
 every start, so if you want to get an history, you will need to rotate the
