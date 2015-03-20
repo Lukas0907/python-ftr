@@ -6,3 +6,5 @@ ordered-set
 readability-lxml
 requests
 sphinx_rtd_theme
+flask
+flask-sqlalchemy

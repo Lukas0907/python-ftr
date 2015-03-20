@@ -27,6 +27,7 @@ Table of Contents
    install
    process
    api
+   testing
 
 
 Indices and tables
