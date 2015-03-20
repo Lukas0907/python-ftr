@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 
+log.sqlite
+
 # C extensions
 *.so
 
