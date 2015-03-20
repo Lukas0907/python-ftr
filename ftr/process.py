@@ -30,10 +30,13 @@ have the HTML and the original URL handy.
     You should have received a copy of the GNU Affero General Public
     License along with python-ftr. If not, see http://www.gnu.org/licenses/
 """
+
+import os
 import logging
 
 try:
     import requests
+
 except ImportError:
     # Happens during installation before setup.py finishes installing deps.
     requests = None
@@ -42,13 +45,20 @@ from .config import ftr_get_config, SiteConfig, CACHE_TIMEOUT, cached
 from .extractor import ContentExtractor
 
 try:
-    from sparks.utils.http import detect_encoding_from_requests_response
+    from sparks.utils.http import (
+        detect_encoding_from_requests_response,
+        split_url,
+    )
 
 except ImportError:
     # same problem, same effect.
     pass
 
 LOGGER = logging.getLogger(__name__)
+
+if bool(os.environ.get('FTR_TEST_ENABLE_SQLITE_LOGGING', False)):
+    from ftr.app import SQLiteHandler
+    LOGGER.addHandler(SQLiteHandler(store_only=('siteconfig', )))
 
 
 @cached(timeout=CACHE_TIMEOUT)
@@ -65,7 +75,38 @@ def requests_get(url):
     return requests.get(url)
 
 
-def ftr_process(url=None, content=None, config=None):
+def sanitize_next_page_link(next_page_link, base_url):
+    """ Convert relative links or query_string only links to absolute URLs. """
+
+    if not next_page_link.startswith(u'http'):
+        if next_page_link.startswith(u'?'):
+            # We have some "?current_page=2" scheme.
+            next_page_link = base_url + next_page_link
+
+        if next_page_link.startswith(u'/'):
+            # We have a server-relative path.
+
+            try:
+                proto, host_and_port, remaining = split_url(base_url)
+
+            except:
+                LOGGER.error(u'Could not split “%s” to get schema/host parts, '
+                             u'next_page_link “%s” will be unusable.',
+                             base_url, next_page_link)
+
+            else:
+                next_page_link = '{0}://{1}{2}'.format(proto,
+                                                       host_and_port,
+                                                       next_page_link)
+        else:
+            LOGGER.warning(u'Unimplemented scheme in '
+                           u'next_page_link %s',
+                           next_page_link)
+
+    return next_page_link
+
+
+def ftr_process(url=None, content=None, config=None, base_url=None):
     u""" process an URL, or some already fetched content from a given URL.
 
     :param url: The URL of article to extract. Can be
@@ -83,6 +124,12 @@ def ftr_process(url=None, content=None, config=None):
         much love and AI as possible. But don't expect too much.
     :type config: a :class:`SiteConfig` instance or ``None``
 
+    :param base_url: reserved parameter, used when fetching multi-pages URLs.
+        It will hold the base URL (the first one fetched), and will serve as
+        base for fixing non-schemed URLs or query_string-only links to next
+        page(s). Please do not set this parameter until you very know what you
+        are doing. Default: ``None``.
+    :type base_url: str or unicode or None
 
     :raises:
         - :class:`RuntimeError` in all parameters-incompatible situations.
@@ -122,8 +169,8 @@ def ftr_process(url=None, content=None, config=None):
             result = requests_get(url)
 
             if result.status_code != requests.codes.ok:
-                LOGGER.error(u'Wrong status code in return while getting “%s”',
-                             url)
+                LOGGER.error(u'Wrong status code in return while getting '
+                             u'“%s”.', url)
                 return None
 
             # Override before accessing result.text ; see `requests` doc.
@@ -136,23 +183,33 @@ def ftr_process(url=None, content=None, config=None):
             content = result.text
 
         except:
-            LOGGER.error(u'Content could not be fetched from URL %s', url)
+            LOGGER.error(u'Content could not be fetched from URL %s.', url)
             raise
 
     if config is None:
         # This can eventually raise SiteConfigNotFound
-        config = SiteConfig(site_config_text=ftr_get_config(url))
+        config_string, matched_host = ftr_get_config(url)
+        config = SiteConfig(site_config_text=config_string, host=matched_host)
 
     extractor = ContentExtractor(config)
+
+    if base_url is None:
+        base_url = url
 
     if extractor.process(html=content):
 
         # This is recursive. Yeah.
         if extractor.next_page_link is not None:
-            next_extractor = ftr_process(url=extractor.next_page_link)
+
+            next_page_link = sanitize_next_page_link(extractor.next_page_link,
+                                                     base_url)
+
+            next_extractor = ftr_process(url=next_page_link,
+                                         base_url=base_url)
+
             extractor.body += next_extractor.body
 
-            extractor.next_page_link = [extractor.next_page_link]
+            extractor.next_page_link = [next_page_link]
 
             if next_extractor.next_page_link is not None:
                 extractor.next_page_link.extend(next_extractor.next_page_link)

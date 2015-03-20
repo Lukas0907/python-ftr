@@ -1,71 +1,22 @@
 
 # python-ftr
 
-Python *partial* (re-)implementation of Five-Filters extractor. Cleans up HTML and extract its content for comfortable reading.
 
-A notable difference is that this python implementation will fetch the website configuration from a centralized repository. 
+FTR is a *partial* (re-)implementation of the [Five-Filters extractor
+](http://fivefilters.org/) in Python.
 
-[API documentation is available](http://python-ftr.readthedocs.org), and this README should probably merged there at some point.
+It cleans up HTML web pages and extract their content and metadata for a
+more comfortable reading experience (or whatever you need it for). It uses
+a centralized and mutualized repository of configuration files to parse
+websites at the most precise level possible, and fallbacks to the well-known
+`readability` automatic extractor if no configuration is found.
 
+A notable difference is that this python implementation will fetch the
+website configuration from a centralized repository on the internet on the
+fly if no configuration is found locally.
 
-## Installation
+[Full documentation is available](http://python-ftr.readthedocs.org).
 
-```
-# latest stable version published:
-# —— CURRENTLY broken, see https://github.com/1flow/python-ftr/issues/4
-pip install ftr 
-
-# via github if PyPI is not yet up-to-date:
-pip install git+https://github.com/1flow/python-ftr@master#egg=ftr
-```
-
-If you are using it in a Django project, you can benefit from `cacheops` to avoid repetitive fetching of website configuration files. Install it this way:
-
-```
-pip install cacheops
-```
-
-And configure `cacheops` [as usual](https://github.com/Suor/django-cacheops).
-
-
-## Configuration
-
-
-### Environment
-
-- `PYTHON_FTR_CACHE_TIMEOUT`: optional, in seconds, as an integer. The caching time of websites configuration files. Defaults to 3 days. Not used if cache is not available.
-- `PYTHON_FTR_REPOSITORIES`: one or more URLs, separated by spaces. In case you need a space in the URL itself, urlencode() it (eg. `%2f`). Default values include [1flow repository](https://github.com/1flow/ftr-site-config) and [official Five-Filters repository](https://github.com/fivefilters/ftr-site-config) (see below).
-
-
-
-### Website configuration repositories
-
-If there are more than one repository, they will be tried in turn.
-
-They must give access to raw config TXT format. There is partial test against failure on this side, but beware it's relatively weak. If the repository does not return `text/plain` results, it will be ignored.
-
-Eg. to use the filters from [the 1flow official repository](https://github.com/1flow/ftr-site-config), we use the following URL: `https://raw.githubusercontent.com/1flow/ftr-site-config/master/`.
-
-
-
-## Usage
-
-### Simple, wrapped usage
-
-```python
-
-from ftr import ftr_process
-
-extracted = ftr_process('http://en.wikipedia.org/wiki/Christopher_Lloyd')
-
-```
-
-If the extraction worked, this will return a `ContentExtractor` instance with useful attributes, else `None` will be returned. Most common attributes are `title` (unicode string), `body` (unicode cleaned HTML), `date` (unicode string, see below), `authors` (list of unicode strings).
-
-
-### Advanced usage
-
-To be documented more, but simply look at the [`ftr_process()` function documentation](http://python-ftr.readthedocs.org/en/latest/process.html), it wraps the underlying classes that are meant to be easily included in any type of code.
 
 
 
@@ -94,14 +45,10 @@ When automatic extraction is used, the `ContentExtractor` instance will have a `
 In the case where a config is found but it has no `site` or `body` directive (eg. automatic extraction should be explicitely used), the `.failures` attributes will not be set if automatic extraction worked. 
 
 
+
 ## TODO
 
-- merge this README with RFTD contents and make it shorter.
-- re-implement the `instapaper_body`-based extraction. I obliterated it without mercy when porting, this was probably worth keeping.
-- implement `file://` repository patterns. As of now, this package always fetches configuration from the centralized repository. This is not always wanted if you have a local copy. As the main benefit of FTR is mutualizing the configurations and enhancing then via community PRs, it still feels legit to try to download the latest one without needing you to update them. But still, local configs could be cool.
-- implement a minimal caching solution when `cacheops` is not available. Without `cacheops`, the process will fetch the config everytime, and in most setups this is not acceptable for obvious slowlyness reasons. Currently, this project is used only in 1flow and `cacheops` is available. PRs welcome. A simple `memoize()` could do the trick for very basic needs.
-- allow to customize the datetime parser from the up-calling level. This will merge both worlds allowing the library to return parsed datetimes, and the calling code to provide a custom parser.
-- eventually, bring back the full `autodetect_on_failure` features if someone needs it.
+See [issues wishlist](/1flow/python-ftr/labels/wishlist) for a dynamic todo list.
 
 
 

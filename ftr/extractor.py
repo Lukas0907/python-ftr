@@ -18,7 +18,10 @@ u""" Python FTR content extractor class and utils.
     You should have received a copy of the GNU Affero General Public
     License along with python-ftr. If not, see http://www.gnu.org/licenses/
 """
+
+import os
 import logging
+
 try:
     from lxml import etree
     # from lxml.cssselect import CSSSelector
@@ -33,6 +36,11 @@ except ImportError:
 from StringIO import StringIO
 
 LOGGER = logging.getLogger(__name__)
+
+if bool(os.environ.get('FTR_TEST_ENABLE_SQLITE_LOGGING', False)):
+    LOGGER.info(u'Activating SQL logger for FTR testing environment.')
+    from ftr.app import SQLiteHandler
+    LOGGER.addHandler(SQLiteHandler(store_only=('siteconfig', )))
 
 
 try:
@@ -118,7 +126,8 @@ class ContentExtractor(object):
             for find_pattern, replace_pattern in self.config.replace_patterns:
                 html = html.replace(find_pattern, replace_pattern)
 
-            LOGGER.info(u'Done replacements.')
+            LOGGER.info(u'Done replacements.',
+                        extra={'siteconfig': self.config.host})
 
         return html
 
@@ -163,7 +172,23 @@ class ContentExtractor(object):
                                       self.config.parser)
 
         self.parser = etree.HTMLParser()
-        self.parsed_tree = etree.parse(StringIO(self.html), self.parser)
+
+        try:
+            self.parsed_tree = etree.parse(StringIO(self.html), self.parser)
+
+        except ValueError, e:
+            if u'Unicode strings with encoding declaration are not supported' \
+                    in unicode(e):
+
+                # For some reason, the HTML/XML declares another encoding
+                # in its meta tags. TODO: we should probably remove this
+                # meta tag, because the sparks detection mechanism usually
+                # does a pretty good job at finding it.
+                #
+                # For now, this will fail for anything other than utf-8 and
+                # make the program crash.
+                self.parsed_tree = etree.parse(StringIO(
+                    self.html.encode('utf-8')), self.parser)
 
         # Wanna use CSS selector?
         #
@@ -187,17 +212,21 @@ class ContentExtractor(object):
                 item = items[0]
 
                 if 'href' in item.keys():
-                    self.next_page_link = item.values()[0]
+                    self.next_page_link = item.get('href')
 
                 else:
                     self.next_page_link = item.text.strip()
+
+                LOGGER.info(u'Found next page link: %s.',
+                            self.next_page_link)
 
                 # First found link is the good one.
                 break
 
             else:
                 LOGGER.warning(u'%s items for next-page link %s',
-                               items, pattern)
+                               items, pattern,
+                               extra={'siteconfig': self.config.host})
 
     def _extract_title(self):
         """ Extract the title and remove it from the document.
@@ -224,13 +253,14 @@ class ContentExtractor(object):
                 item = items[0]
 
                 try:
-                    self.title = item.text
+                    self.title = item.text.strip()
 
                 except AttributeError:
                     # '_ElementStringResult' object has no attribute 'text'
-                    self.title = unicode(item)
+                    self.title = unicode(item).strip()
 
-                LOGGER.info(u'title set to “%s”', self.title)
+                LOGGER.info(u'title set to “%s”.', self.title,
+                            extra={'siteconfig': self.config.host})
 
                 try:
                     item.getparent().remove(item)
@@ -240,15 +270,24 @@ class ContentExtractor(object):
                     # lxml.etree._Element, got _ElementStringResult)
                     pass
 
+                except AttributeError, e:
+                    if u'NoneType' not in unicode(e):
+                        LOGGER.exception(u'Could not remove title from '
+                                         u'document.',
+                                         extra={'siteconfig': self.config.host})
+                    # implicit: else: this is begnin
+
                 except:
-                    LOGGER.exception(u'Could not remove title from document.')
+                    LOGGER.exception(u'Could not remove title from document.',
+                                     extra={'siteconfig': self.config.host})
 
                 # Exit at first item found.
                 break
 
             else:
                 LOGGER.warning(u'Multiple items (%s) for title pattern %s.',
-                               items, pattern)
+                               items, pattern,
+                               extra={'siteconfig': self.config.host})
 
     def _extract_author(self):
         """ Extract author(s) if not already done. """
@@ -280,7 +319,8 @@ class ContentExtractor(object):
 
                 if stripped_author:
                     self.author.add(stripped_author)
-                    LOGGER.info(u'Author found: %s', stripped_author)
+                    LOGGER.info(u'Author found: %s.', stripped_author,
+                                extra={'siteconfig': self.config.host})
 
     def _extract_language(self):
         """ Extract language from the HTML ``<head>`` tags. """
@@ -299,7 +339,8 @@ class ContentExtractor(object):
 
                 if stripped_language:
                     self.language = stripped_language
-                    LOGGER.info(u'Language found: %s', stripped_language)
+                    LOGGER.info(u'Language found: %s.', stripped_language,
+                                extra={'siteconfig': self.config.host})
                     found = True
                     break
 
@@ -341,7 +382,8 @@ class ContentExtractor(object):
                 if stripped_date:
                     # self.date = strtotime(trim(elems, "; \t\n\r\0\x0B"))
                     self.date = stripped_date
-                    LOGGER.info(u'Date found: %s', stripped_date)
+                    LOGGER.info(u'Date found: %s.', stripped_date,
+                                extra={'siteconfig': self.config.host})
                     found = True
                     break
 
@@ -353,7 +395,8 @@ class ContentExtractor(object):
         def _remove(xpath_expression):
             for item in self.parsed_tree.xpath(xpath_expression):
                 item.getparent().remove(item)
-                LOGGER.debug(u'Removed unwanted item %s', item)
+                LOGGER.debug(u'Removed unwanted item %s.', item,
+                             extra={'siteconfig': self.config.host})
 
         # Strip elements that use xpath expressions.
         for pattern in self.config.strip:
@@ -442,21 +485,38 @@ class ContentExtractor(object):
                             new_tree = etree.parse(
                                 StringIO(pruned_string), self.parser)
 
+                            failed = False
+
                             try:
                                 body.append(
                                     new_tree.xpath('//html/body/div/div')[0]
                                 )
                             except IndexError:
+
+                                if 'id="readabilityBody"' in pruned_string:
+                                    try:
+                                        body.append(
+                                            new_tree.xpath('//body')
+                                        )
+                                    except:
+                                        failed = True
+
+                                else:
+                                    failed = True
+
+                            if failed:
                                 LOGGER.error(u'Pruning this item did not '
                                              u'work:\n\n%s\n\nWe got: “%s” '
                                              u'and skipped it.',
                                              etree.tostring(
                                                  item).replace(u'\n', u''),
-                                             pruned_string.replace(u'\n', u''))
+                                             pruned_string.replace(u'\n', u''),
+                                             extra={'siteconfig':
+                                                    self.config.host})
                                 pass
 
                         else:
-                            etree.SubElement(body, item)
+                            body.append(item)
 
                         appended_something = True
 
@@ -482,7 +542,8 @@ class ContentExtractor(object):
 
             if title:
                 self.title = title
-                LOGGER.info(u'Got a title in automatic mode.')
+                LOGGER.info(u'Got a title in automatic mode.',
+                            extra={'siteconfig': self.config.host})
 
             else:
                 self.failures.add('title')
@@ -495,7 +556,8 @@ class ContentExtractor(object):
 
             if body:
                 self.body = body
-                LOGGER.info(u'Extracted a body in automatic mode.')
+                LOGGER.info(u'Extracted a body in automatic mode.',
+                            extra={'siteconfig': self.config.host})
 
             else:
                 self.failures.add('body')
@@ -504,8 +566,10 @@ class ContentExtractor(object):
             if not bool(getattr(self, attr_name, None)):
                 if bool(getattr(self.config, attr_name, None)):
                     self.failures.add(attr_name)
-                    LOGGER.warning(u'Could not extract any %s from %s.',
-                                   attr_name, getattr(self.config, attr_name))
+                    LOGGER.warning(u'Could not extract any %s from XPath '
+                                   u'expression(s) %s.', attr_name,
+                                   getattr(self.config, attr_name),
+                                   extra={'siteconfig': self.config.host})
                     # import ipdb; ipdb.set_trace()
 
     def process(self, html, url=None, smart_tidy=True):

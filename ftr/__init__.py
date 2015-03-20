@@ -20,6 +20,10 @@ License along with python-ftr. If not, see http://www.gnu.org/licenses/
 
 """
 
+import logging
+
+logging.getLogger('requests').setLevel(logging.ERROR)
+
 # Import the sparks-managed version.
 from .version import version  # NOQA
 

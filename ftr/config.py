@@ -27,12 +27,19 @@ named after the website they hold rules for.
 """
 import os
 import re
+import codecs
 import logging
 
 LOGGER = logging.getLogger(__name__)
 
+if bool(os.environ.get('FTR_TEST_ENABLE_SQLITE_LOGGING', False)):
+    from ftr.app import SQLiteHandler
+    LOGGER.addHandler(SQLiteHandler(store_only=('siteconfig', )))
+
 try:
+    import requests
     from ordered_set import OrderedSet
+    from sparks.utils.http import split_url
 
 except ImportError:
     # Avoid a crash during setup.py
@@ -61,6 +68,10 @@ except Exception, e:
 
 # defaults to 3 days of caching for website configuration
 CACHE_TIMEOUT = int(os.environ.get('PYTHON_FTR_CACHE_TIMEOUT', 345600))
+
+# test.py will set this to any random integer to fake cache
+# invalidation without invalidating the fetched HTML pages.
+FTR_CONFIG_ALWAYS_RELOAD = 0
 
 HOSTNAME_REGEX = re.compile(
     r'/^(([a-z0-9-]*[a-z0-9])\.)*([a-z0-9-]*[a-z0-9])$/',
@@ -100,9 +111,11 @@ class InvalidSiteConfig(SiteConfigException):
     pass
 
 
-@cached(timeout=CACHE_TIMEOUT)
+@cached(timeout=CACHE_TIMEOUT, extra=FTR_CONFIG_ALWAYS_RELOAD)
 def ftr_get_config(website_url, exact_host_match=False):
     """ Download the Five Filters config from centralized repositories.
+
+    Repositories can be local if you need to override siteconfigs.
 
     The first entry found is returned. If no configuration is found,
     `None` is returned. If :mod:`cacheops` is installed, the result will
@@ -120,7 +133,8 @@ def ftr_get_config(website_url, exact_host_match=False):
         no check is performed yet, be careful of what you pass.
     :type website_url: str or unicode
 
-    :returns: string -- the loaded site config, if found.
+    :returns: tuple -- the loaded site config (as unicode string) and
+        the hostname matched (unicode string too).
     :raises: :class:`SiteConfigNotFound` if no config could be found.
 
     .. note:: Whatever ``exact_host_match`` value is, the ``www`` part is
@@ -132,14 +146,20 @@ def ftr_get_config(website_url, exact_host_match=False):
         part if needed by someone. PRs welcome as always.
     """
 
-    import requests
-    from sparks.utils.http import split_url
+    def check_requests_result(result):
+        return (
+            u'text/plain' in result.headers.get('content-type')
+            and u'<!DOCTYPE html>' not in result.text
+            and u'<html ' not in result.text
+            and u'</html>' not in result.text
+        )
 
     repositories = [
         x.strip() for x in os.environ.get(
             'PYTHON_FTR_REPOSITORIES',
-            u'https://raw.githubusercontent.com/1flow/ftr-site-config/master/ '
-            u'https://raw.githubusercontent.com/fivefilters/ftr-site-config/master/'  # NOQA
+            os.path.expandvars(u'${HOME}/sources/ftr-site-config') + u' '
+            + u'https://raw.githubusercontent.com/1flow/ftr-site-config/master/ '  # NOQA
+            + u'https://raw.githubusercontent.com/fivefilters/ftr-site-config/master/'  # NOQA
         ).split() if x.strip() != u'']
 
     try:
@@ -170,30 +190,43 @@ def ftr_get_config(website_url, exact_host_match=False):
         # try, in turn:
         #   website.ext.txt
         #   .website.ext.txt
+
         for domain_name in domain_names:
 
             skip_repository = False
 
-            for full_name in (
-                u'{0}{1}.txt'.format(repository, domain_name),
-                u'{0}.{1}.txt'.format(repository, domain_name),
+            for txt_siteconfig_name in (
+                u'{0}.txt'.format(domain_name),
+                u'.{0}.txt'.format(domain_name),
             ):
-                result = requests.get(full_name)
+                if repository.startswith('http'):
+                    siteconfig_url = repository + txt_siteconfig_name
 
-                if result.status_code == requests.codes.ok:
-                    if u'text/plain' not in result.headers.get('content-type') \
-                        or u'<!DOCTYPE html>' in result.text \
-                        or u'<html ' in result.text \
-                            and u'</html>' in result.text:
-                        LOGGER.error(u'“%s” repository URL does not return '
-                                     u'RAW plain text results.')
+                    result = requests.get(siteconfig_url)
 
-                        skip_repository = True
-                        break
+                    if result.status_code == requests.codes.ok:
+                        if not check_requests_result(result):
+                            LOGGER.error(u'“%s” repository URL does not '
+                                         u'return text/plain results.')
+                            skip_repository = True
+                            break
 
-                    LOGGER.info(u'Using siteconfig for domain %s from %s.',
-                                domain_name, full_name)
-                    return result.text
+                        LOGGER.info(u'Using remote siteconfig for domain '
+                                    u'%s from %s.', domain_name,
+                                    siteconfig_url, extra={
+                                        'siteconfig': domain_name})
+                        return result.text, txt_siteconfig_name[:-4]
+
+                else:
+                    filename = os.path.join(repository, txt_siteconfig_name)
+
+                    if os.path.exists(filename):
+                        LOGGER.info(u'Using local siteconfig for domain '
+                                    u'%s from %s.', domain_name,
+                                    filename, extra={
+                                        'siteconfig': domain_name})
+                        with codecs.open(filename, 'rb', encoding='utf8') as f:
+                            return f.read(), txt_siteconfig_name[:-4]
 
                 if skip_repository:
                     break
@@ -244,6 +277,9 @@ def ftr_string_to_instance(config_string):
             LOGGER.warning(u'Unrecognized syntax “%s” on line #%s.',
                            line_content, line_number)
             continue
+
+        # handle some very rare title()d directives.
+        key = key.lower()
 
         if not key or (not value and key != 'replace_string'):
             LOGGER.warning(u'Empty key or value in “%s” on line #%s.',
@@ -297,8 +333,8 @@ def ftr_string_to_instance(config_string):
             config.replace_string.append(value)
 
         else:
-            LOGGER.warning(u'Unsupported directive %s = %s on line #%s.',
-                           key, value, line_number)
+            LOGGER.warning(u'Unsupported directive “%s” on line #%s.',
+                           line_content, line_number)
 
     find_count = len(config.find_string)
     replace_count = len(config.replace_string)
@@ -340,6 +376,10 @@ class SiteConfig(object):
 
         if host is not None:
             self.load(host)
+
+        # This `host` attribute will become the
+        # `siteconfig` extra argument in logging calls.
+        self.host = host
 
         if site_config_text is not None:
             self.append(ftr_string_to_instance(site_config_text))
@@ -429,13 +469,14 @@ class SiteConfig(object):
         """
 
         # Can raise a SiteConfigNotFound, intentionally bubbled.
-        config = ftr_get_config(host, exact_host_match)
+        config_string, host_string = ftr_get_config(host, exact_host_match)
 
-        if config is None:
-            LOGGER.error(u'Error while loading configuration.')
+        if config_string is None:
+            LOGGER.error(u'Error while loading configuration.',
+                         extra={'siteconfig': host_string})
             return
 
-        self.append(ftr_string_to_instance(config))
+        self.append(ftr_string_to_instance(config_string))
 
     def append(self, newconfig):
         """ Append another site config to current instance.
