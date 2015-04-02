@@ -219,7 +219,8 @@ def ftr_get_config(website_url, exact_host_match=False):
                     if result.status_code == requests.codes.ok:
                         if not check_requests_result(result):
                             LOGGER.error(u'“%s” repository URL does not '
-                                         u'return text/plain results.')
+                                         u'return text/plain results.',
+                                         repository)
                             skip_repository = True
                             break
 
